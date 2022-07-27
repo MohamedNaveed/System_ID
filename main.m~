@@ -5,7 +5,7 @@ clc;clear;
 %sysd = spring_mass_damper();
 sysd = OKID_paper_sys();
 
-n = size(sysd.A,1); % order of the system
+n = size(sysd.A,1); %order of the system
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
 
@@ -13,18 +13,17 @@ nz = size(sysd.C,1); % number of outputs
 x0 = zeros(n,1);
 
 t_steps = 1000;
-u_vec = normrnd(0, 20, 1, t_steps); %perturbation
+u_vec = normrnd(0, 1, 1, t_steps); %perturbation
 
-ADD_PROC_NOISE = false;
-ADD_MEAS_NOISE = false;
+ADD_NOISE = false;
+[x, y] = generate_response(x0, u_vec, sysd, ADD_NOISE);%output
 
-[x, y] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
 
 q = 40; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 40; % number of markov parameters
+num_mp = 100; % number of markov parameters
 Y_true = zeros(size(sysd.C,1), num_mp*nu);
 
 Y_true(:,1:nu) = sysd.D;
@@ -95,8 +94,8 @@ end
 err_Y = (Y_true - Y);
 
 %% Hankel 
-alpha = n + 5;
-beta = n + 5;
+alpha = n + 20;
+beta = n + 20;
 
 H_0 = zeros(alpha*nz, beta*nu);
 
@@ -166,8 +165,6 @@ end
 
 M = inv(O_mat'*O_mat)*O_mat'*Y_o
 
-LS_error = O_mat*M - Y_o;
-
 %% observer system 
 
 %A_bar = sysd.A + M*sysd.C;
@@ -220,7 +217,7 @@ for j=1:size(err_Y_bar_est,1)
 end
 xlabel('Markov parameters');
 ylabel('error $\bar{Y}_{est}$','Interpreter','latex','fontsize',16);
-hold off;
+
 %% reconstruct initial condition
 %{
 Oq = zeros(nz*q,n);

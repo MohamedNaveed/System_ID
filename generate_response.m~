@@ -11,18 +11,14 @@ for i = 1:t_steps
     x(:,i+1) = sysd.A*x(:,i) + B_u;
     
     if ADD_PROC_NOISE
-        %Q = 0.05*diag(abs(B_u));
-        Q = diag([0.0242, 3.592, 0.0534, 1.034, 0.0226, 0.2279])*10^-4;
-        x(:,i+1) = x(:,i+1) + mvnrnd(zeros(size(B_u)), Q, 1)';
+        Q = 
+        x(:,i+1) = x(:,i+1) + mvnrnd(zeros(size(B_u)),0.05*diag(abs(B_u)),1)';
     end
     
     y(:,i) = sysd.C*x(:,i) + sysd.D*u_vec(i);
     
     if ADD_MEAS_NOISE
-        
-        %R = 0.05*diag(abs(y(:,i)));
-        R = diag([2.785, 2.785])*(10^-2);
-        y(:,i) = y(:,i) + mvnrnd(zeros(size(y(:,i))), R, 1)';
+        y(:,i) = y(:,i) + mvnrnd(zeros(size(y(:,i))), 0.05*diag(abs(y(:,i))),1)';
     end
 end
     
