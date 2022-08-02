@@ -36,7 +36,7 @@ R = eye(nu);
 
 
 % choose initial condition
-t = 10;
+t = 100;
 Z0 = zeros(q*nz + (q-1)*nu,1);
 
 for i=1:q

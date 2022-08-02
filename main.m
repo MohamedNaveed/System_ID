@@ -2,8 +2,9 @@
 clc;clear;
 
 % get system 
-sysd = spring_mass_damper();
+%sysd = spring_mass_damper();
 %sysd = OKID_paper_sys();
+sysd = one_dim_sys();
 
 rng(0);
 n = size(sysd.A,1); % order of the system
@@ -20,11 +21,11 @@ ADD_MEAS_NOISE = false;
 
 [x, y] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
 
-q = 9; % number of markov parameters to estimate
+q = 2; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 40; % number of markov parameters
+num_mp = 10; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters(sysd,num_mp);
 
@@ -148,10 +149,11 @@ Y_bar_from_xtq = reconstruct_initial_condition_exp(sysd, q, x, y, u_vec, Y_bar);
 %% control using the ARMA model.
 % same q but using different arma parameters
 
-[Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec);
+%[Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec);
 [Z_1, UU_1, K_1] = apply_control_ARMA(Y_bar_from_xtq, sysd, q, y, u_vec);
 
 %%
+%{
 figure(2);
 
 subplot(3,1,1);
@@ -166,3 +168,17 @@ subplot(3,1,3);
 plot(1:size(UU,2),UU(1,:)-UU_1(1,:),'LineWidth',3);
 ylabel('Control');
 xlabel('time steps');
+
+
+figure(2);
+
+subplot(2,1,1);
+plot(1:size(Z_1,2),Z_1_q(1,:)-Z_1(1,:),'LineWidth',3);
+title('Difference between the ARMA systems');
+ylabel('Response');
+
+subplot(2,1,2);
+plot(1:size(UU_1,2),UU_1_q(1,:)-UU_1(1,:),'LineWidth',3);
+ylabel('Control');
+xlabel('time steps');
+%}

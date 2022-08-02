@@ -20,11 +20,11 @@ ADD_MEAS_NOISE = false;
 
 [x, y] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
 
-q = 9; % number of markov parameters to estimate
+q = 3; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 40; % number of markov parameters
+num_mp = 70; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters(sysd,num_mp);
 
@@ -56,6 +56,7 @@ rank_V_bar = rank(V_bar)
 
 Y_bar = y_bar*pinv(V_bar);
 
+Y_bar = [Y_bar zeros(nz, (nu+nz)*(num_mp - q))]; %appending 0's to find the other markov parameters
 
 %% Find open loop markov parameters
 
@@ -84,39 +85,11 @@ err_Y_est = (Y_true - Y_est);
 
 %% estimation of observer gain M
 
-Y_o = zeros((num_mp)*nz, nz);
-
-for k = 1:num_mp
-    
-    temp = -Y_bar(:, nu + (k - 1)*(nu + nz)+ nu + 1:nu + k*(nu + nz));
-    
-    if (k ~= 1)
-        for i=1:k-1
-            temp = temp + Y_bar(:, nu + (i - 1)*(nu + nz)+ nu + 1:...
-                nu + (i)*(nu + nz))*Y_o((k-i -1)*nz + 1:(k-i)*nz,:);
-        end
-    end
-    
-    Y_o((k-1)*nz + 1:k*nz,:) = temp;
-
-end
-
-O_mat = zeros(nz*(num_mp), order);
-
-for i = 1:num_mp
-    
-    O_mat((i-1)*nz+1:i*nz,:) = C_est*A_est^(i-1);
-end
-
-M = inv(O_mat'*O_mat)*O_mat'*Y_o
-
-LS_error = O_mat*M - Y_o;
+[M, LS_error_M] = calculate_M(sysd, num_mp, Y_bar, A_est, C_est);
 
 %% observer system 
 
-%A_bar = sysd.A + M*sysd.C;
 A_bar = A_est + M*C_est;
-%B_bar = [sysd.B + M*sysd.D, -M];
 B_bar = [B_est + M*D_est, -M];
 
 disp('Eigenvalues of A_bar = ');
@@ -125,7 +98,8 @@ disp('A_bar^q =');
 A_bar^q
 
 
-%%
+%% Y_bar_est
+
 Y_bar_est = D_est;
 
 for i = 1:num_mp
@@ -174,16 +148,33 @@ Y_bar_from_xtq = reconstruct_initial_condition_exp(sysd, q, x, y, u_vec, Y_bar);
 %% control using the ARMA model.
 % same q but using different arma parameters
 
-[Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec);
+%[Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec);
 [Z_1, UU_1, K_1] = apply_control_ARMA(Y_bar_from_xtq, sysd, q, y, u_vec);
 
 %%
+%{
 figure(2);
-title('Difference between the ARMA systems');
+
 subplot(3,1,1);
 plot(1:length(K),K-K_1,'LineWidth',3);
 ylabel('Gain K');
+title('Difference between the ARMA systems');
+subplot(3,1,2);
+plot(1:size(Z,2),Z(1,:)-Z_1(1,:),'LineWidth',3);
+ylabel('Response');
 
+subplot(3,1,3);
+plot(1:size(UU,2),UU(1,:)-UU_1(1,:),'LineWidth',3);
+ylabel('Control');
+xlabel('time steps');
+%}
+
+figure(2);
+
+subplot(3,1,1);
+plot(1:length(K),K-K_1,'LineWidth',3);
+ylabel('Gain K');
+title('Difference between the ARMA systems');
 subplot(3,1,2);
 plot(1:size(Z,2),Z(1,:)-Z_1(1,:),'LineWidth',3);
 ylabel('Response');
