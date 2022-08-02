@@ -4,7 +4,7 @@ clc;clear;
 
 %sysd = spring_mass_damper();
 sysd = OKID_paper_sys();
-
+rng(0);
 n = size(sysd.A,1); % order of the system
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
@@ -25,15 +25,9 @@ q = 40; % number of markov parameters to estimate
 %% true open loop markov parameters
 
 num_mp = 40; % number of markov parameters
-Y_true = zeros(size(sysd.C,1), num_mp*nu);
 
-Y_true(:,1:nu) = sysd.D;
+Y_true = calculate_true_markov_parameters(sysd,num_mp);
 
-for i = 1:num_mp-1
-   
-    Y_true(:,nu + 1 + (i-1)*nu:nu + i*nu) = sysd.C*(sysd.A^(i-1))*sysd.B;
-    
-end
 
 %% build V matrix
 
@@ -72,7 +66,7 @@ D_est = Y_bar(:,1);
 Y = zeros(size(sysd.C,1), num_mp*nu);
 
 Y(:,1:nu) = D_est;
-Y_bar = [Y_bar zeros(size(sysd.C,1), (nu+nz)*(num_mp - q))]; %appending 0's to find the other markov parameters
+Y_bar = [Y_bar zeros(nz, (nu+nz)*(num_mp - q))]; %appending 0's to find the other markov parameters
 
 for k = 1:num_mp-1
     
@@ -221,29 +215,22 @@ end
 xlabel('Markov parameters');
 ylabel('error $\bar{Y}_{est}$','Interpreter','latex','fontsize',16);
 hold off;
-%% reconstruct initial condition
-%{
-Oq = zeros(nz*q,n);
 
-for i=1:q
-    Oq((i-1)*nz + 1: i*nz,:) = sysd.C*sysd.A^(q-i);
-end
+%% reconstruct initial condition experiment
 
-Oq_dagger = inv(Oq'*Oq)*Oq';
+Y_bar_from_xtq = reconstruct_initial_condition_exp(sysd, q, x, y, u_vec, Y_bar);
 
-samples_taken = q+5:-1:1+5;
-Zq = y(samples_taken);
-Uq = u_vec(samples_taken);
 
-Gq = zeros(nz*q,m*q);
+%% control using the ARMA model.
+% same q but using different arma parameters
 
-Gq = [0, sysd.C*sysd.B, sysd.C*sysd.A*sysd.B, sysd.C*sysd.A^2*sysd.B, sysd.C*sysd.A^3*sysd.B; ...
-      0, 0, sysd.C*sysd.B, sysd.C*sysd.A*sysd.B, sysd.C*sysd.A^2*sysd.B;...
-      0, 0, 0, sysd.C*sysd.B, sysd.C*sysd.A*sysd.B; ...
-      0, 0, 0, 0, sysd.C*sysd.B;
-      0, 0, 0, 0, 0];
-  
-init_cond = Oq_dagger*(Zq' - Gq*Uq')
+[Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec);
+[Z1, UU_1, K_1] = apply_control_ARMA(Y_bar_from_xtq, sysd, q, y, u_vec);
 
-alphas = sysd.C*(sysd.A^q)*Oq_dagger;
-%}
+%%
+figure;
+
+plot(1:length(K),K-K_1,'LineWidth',3);
+
+figure;
+plot(1:size(Z,2),Z(1,:)-Z1(1,:),'LineWidth',3);
