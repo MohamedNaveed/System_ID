@@ -1,14 +1,14 @@
 % System ID main. 
 clc;clear;
-% get system 
 
-%sysd = spring_mass_damper();
-sysd = OKID_paper_sys();
+% get system 
+sysd = spring_mass_damper();
+%sysd = OKID_paper_sys();
+
 rng(0);
 n = size(sysd.A,1); % order of the system
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
-
 
 x0 = zeros(n,1);
 
@@ -20,14 +20,13 @@ ADD_MEAS_NOISE = false;
 
 [x, y] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
 
-q = 40; % number of markov parameters to estimate
+q = 9; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
 num_mp = 40; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters(sysd,num_mp);
-
 
 %% build V matrix
 
@@ -57,69 +56,21 @@ rank_V_bar = rank(V_bar)
 
 Y_bar = y_bar*pinv(V_bar);
 
-%% Find D
-
-D_est = Y_bar(:,1);
+Y_bar = [Y_bar zeros(nz, (nu+nz)*(num_mp - q))]; %appending 0's to find the other markov parameters
 
 %% Find open loop markov parameters
 
-Y = zeros(size(sysd.C,1), num_mp*nu);
-
-Y(:,1:nu) = D_est;
-Y_bar = [Y_bar zeros(nz, (nu+nz)*(num_mp - q))]; %appending 0's to find the other markov parameters
-
-for k = 1:num_mp-1
-    
-    temp = Y_bar(:, nu + 1 + (k - 1)*(nu + nz):nu + (k - 1)*(nu + nz) + nu) + ...
-            Y_bar(:, nu + (k - 1)*(nu + nz)+ nu + 1:nu + (k)*(nu + nz))*D_est;
-    
-    if (k ~= 1)
-        for i=1:k-1
-            temp = temp + Y_bar(:, nu + (i - 1)*(nu + nz)+ nu + 1:...
-                       nu + (i)*(nu + nz))*Y(:,nu + (k-i-1)*nu + 1:nu + (k-i)*nu);
-        end
-    end
-    
-    Y(:,nu + (k-1)*nu + 1:nu + k*nu) = temp;
-    
-end
+Y = calculate_open_loop_markov_para(sysd,num_mp, Y_bar);
 
 %% error in markov parameters
 
 err_Y = (Y_true - Y);
 
-%% Hankel 
-alpha = n + 5;
-beta = n + 5;
+%% Eigen realization algorithm ERA
 
-H_0 = zeros(alpha*nz, beta*nu);
+[A_est, B_est, C_est] = ERA(sysd, Y);
 
-for i=1:alpha
-    
-    H_0((i-1)*nz + 1:i*nz,:)  = Y(:,nu + i*nu: nu + (beta + i-1)*nu);
-
-end
-
-[R,Sig,S] = svd(H_0);
-
-order = n;
-P_b = R(:,1:order)*(Sig(1:order,1:order)^(1/2));
-Q_b = S(:,1:order)*(Sig(1:order,1:order)^(1/2));
-
-%% Estimation of A,B,C
-
-H_1 = zeros(alpha*nz, beta*nu);
-
-for i=1:alpha
-    
-    H_1((i-1)*nz + 1:i*nz,:)  = Y(:,nu + (i+1)*nu: nu + (beta + i)*nu);
-
-end
-    
-inv_Sig = inv(Sig(1:order,1:order)^(1/2));
-A_est = inv_Sig*R(:,1:order)'*H_1*S(:,1:order)*inv_Sig;
-C_est = P_b(1:nz,:);
-B_est = Q_b(1:nu,:)';
+D_est = Y_bar(:,1);
 
 Y_est = zeros(size(sysd.C,1), (num_mp -1)*nu);
 
@@ -134,39 +85,11 @@ err_Y_est = (Y_true - Y_est);
 
 %% estimation of observer gain M
 
-Y_o = zeros((num_mp)*nz, nz);
-
-for k = 1:num_mp
-    
-    temp = -Y_bar(:, nu + (k - 1)*(nu + nz)+ nu + 1:nu + k*(nu + nz));
-    
-    if (k ~= 1)
-        for i=1:k-1
-            temp = temp + Y_bar(:, nu + (i - 1)*(nu + nz)+ nu + 1:...
-                nu + (i)*(nu + nz))*Y_o((k-i -1)*nz + 1:(k-i)*nz,:);
-        end
-    end
-    
-    Y_o((k-1)*nz + 1:k*nz,:) = temp;
-
-end
-
-O_mat = zeros(nz*(num_mp), order);
-
-for i = 1:num_mp
-    
-    O_mat((i-1)*nz+1:i*nz,:) = C_est*A_est^(i-1);
-end
-
-M = inv(O_mat'*O_mat)*O_mat'*Y_o
-
-LS_error = O_mat*M - Y_o;
+[M, LS_error_M] = calculate_M(sysd, num_mp, Y_bar, A_est, C_est);
 
 %% observer system 
 
-%A_bar = sysd.A + M*sysd.C;
 A_bar = A_est + M*C_est;
-%B_bar = [sysd.B + M*sysd.D, -M];
 B_bar = [B_est + M*D_est, -M];
 
 disp('Eigenvalues of A_bar = ');
@@ -175,7 +98,8 @@ disp('A_bar^q =');
 A_bar^q
 
 
-%%
+%% Y_bar_est
+
 Y_bar_est = D_est;
 
 for i = 1:num_mp
@@ -225,12 +149,20 @@ Y_bar_from_xtq = reconstruct_initial_condition_exp(sysd, q, x, y, u_vec, Y_bar);
 % same q but using different arma parameters
 
 [Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec);
-[Z1, UU_1, K_1] = apply_control_ARMA(Y_bar_from_xtq, sysd, q, y, u_vec);
+[Z_1, UU_1, K_1] = apply_control_ARMA(Y_bar_from_xtq, sysd, q, y, u_vec);
 
 %%
-figure;
+figure(2);
 
+subplot(3,1,1);
 plot(1:length(K),K-K_1,'LineWidth',3);
+ylabel('Gain K');
+title('Difference between the ARMA systems');
+subplot(3,1,2);
+plot(1:size(Z,2),Z(1,:)-Z_1(1,:),'LineWidth',3);
+ylabel('Response');
 
-figure;
-plot(1:size(Z,2),Z(1,:)-Z1(1,:),'LineWidth',3);
+subplot(3,1,3);
+plot(1:size(UU,2),UU(1,:)-UU_1(1,:),'LineWidth',3);
+ylabel('Control');
+xlabel('time steps');

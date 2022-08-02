@@ -58,9 +58,9 @@ for i=1:q
     
 end
 
-figure;
+figure(3);
 plot(1:length(Y_bar_from_xtq),Y_bar(:,1:nu + q*(nu+nz)) - Y_bar_from_xtq,'Linewidth',2);
-ylabel('error');
+ylabel('error in $Y_{bar}$','Interpreter','latex','fontsize',16);
 
 end
 
