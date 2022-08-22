@@ -13,7 +13,7 @@ nz = size(sysd.C,1); % number of outputs
 
 x0 = zeros(n,1);
 
-t_steps = 1000;
+t_steps = 5;
 u_vec = normrnd(0, 20, 1, t_steps); %perturbation
 
 ADD_PROC_NOISE = false;
@@ -25,7 +25,7 @@ q = 2; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 10; % number of markov parameters
+num_mp = 40; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters(sysd,num_mp);
 
@@ -182,3 +182,7 @@ plot(1:size(UU_1,2),UU_1_q(1,:)-UU_1(1,:),'LineWidth',3);
 ylabel('Control');
 xlabel('time steps');
 %}
+
+figure(2)
+plot(1:size(Z_1,2),Z_1(1,:),'LineWidth',3)
+ylabel('Response');

@@ -51,7 +51,7 @@ end
 
 % apply control
 
-control_t_steps = 100;
+control_t_steps = 500;
 
 Z = zeros(q*nz + (q-1)*nu, control_t_steps+1);
 Z(:,1) = Z0;

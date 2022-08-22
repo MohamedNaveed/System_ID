@@ -3,8 +3,6 @@ function [sysd] = one_dim_sys()
 % simple spring mass damper system with position output
 % discrete time system. 
 
-
-
 %continuous time system
 A = 0.1;
 B = 1;
