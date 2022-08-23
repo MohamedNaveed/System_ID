@@ -3,7 +3,7 @@ function [x,y] = generate_response_oscillator(x0, u_vec, n, nz, del_t)
 
 t_steps = size(u_vec,2);
 
-y = zeros(nz,t_steps);
+y = zeros(nz,t_steps); %output is recorded from t=1
 x = zeros(n,t_steps+1);
 x(:,1) = x0;
 

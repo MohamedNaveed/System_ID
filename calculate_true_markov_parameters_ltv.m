@@ -9,7 +9,7 @@ n = size(sysd.A,1);
 
 Y_true = zeros(nz, num_mp*nu);
 
-Y_true(:,1:nu) = sysd.D;
+Y_true(:,1:nu) = sysd.D; 
 del_t = sysd.Ts;
 Phi = eye(n);
 
@@ -26,11 +26,10 @@ for i = 1:num_mp-1
         if i>1
             temp = oscillator((i-1)*del_t);
             A = temp.A;
-            Phi = A*Phi;
+            Phi = A*Phi; %output is recorded from t=1
         end
         
     end
-    
     
     Y_true(:,nu + 1 + (i-1)*nu:nu + i*nu) = C*Phi*B;
     
