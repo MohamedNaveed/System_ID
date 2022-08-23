@@ -29,7 +29,7 @@ num_mp = 40; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters(sysd,num_mp);
 
-%% build V matrix
+%% build data (V) matrix
 
 V = build_V(u_vec, y, q);
 
