@@ -1,0 +1,26 @@
+% System ID main. 
+clc;clear;
+
+% get system 
+system = 'oscillator'
+
+if system == 'oscillator'
+    sysd = oscillator(0);
+end
+rng(0);
+n = size(sysd.A,1); % order of the system
+nu = size(sysd.B,2); % number of control inputs
+nz = size(sysd.C,1); % number of outputs
+
+x0 = ones(n,1);
+
+t_steps = 5;
+u_vec = normrnd(0, 20, nu, t_steps); %perturbation
+
+ADD_PROC_NOISE = false;
+ADD_MEAS_NOISE = false;
+
+if strncmp(system,'oscillator')
+    [x, y] = generate_response_oscillator(x0, u_vec, @oscillator, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
+end
+q = 2; % number of markov parameters to estimate
