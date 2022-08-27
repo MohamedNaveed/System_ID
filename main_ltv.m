@@ -12,11 +12,12 @@ n = size(sysd.A,1); % order of the system
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
 
-x0 = ones(n,1);
+x0 = zeros(n,1);
+%x0 = ones(n,1);
 
 t_steps = 20;
 
-no_rollouts = 50;
+no_rollouts = 50; 
 
 U = zeros(nu*t_steps,no_rollouts);
 y_matrix = zeros(nz*t_steps, no_rollouts);
@@ -51,54 +52,45 @@ q = 3; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 40; % number of markov parameters
+num_mp = 10; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters_ltv(system,num_mp);
 
-%% build data (V) matrix and calculate the ARMA parameters
-
-alpha_beta = zeros(nz*(t_steps -q), q*(nz + nu) +nu);
+%% build data (V) matrix and calculate the ARMA parameters for first few time steps. 
+alpha_beta = zeros(nz*t_steps, q*(nz + nu) +  nu);
 
 rank_V = [];
+
+for k = 1:q
+    
+    V = build_data_mat_ltv(U, y_matrix, q, nu, nz, k, no_rollouts);
+    alpha_beta((k-1)*nz + 1: k*nz,1:(k-1)*(nu+nz)+nu) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);
+    rank_V = [rank_V rank(V)];
+    
+end
+
+%% build data (V) matrix and calculate the ARMA parameters
+
 ID_time_idxs = q+1:t_steps;
 
 for k = ID_time_idxs % k is the time step at which the ARMA is identified.
 
     V = build_data_mat_ltv(U, y_matrix, q, nu, nz, k, no_rollouts);
 
-    alpha_beta((k-1)*nz + 1: k*nz,:) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);
+    alpha_beta((k-1)*nz + 1: k*nz,:) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V); %moore penrose inverse. 
     rank_V = [rank_V rank(V)];
 end
 
+
 %% checking response. 
 
-rollout_id = 1; % which rollout are you checking the data for
+check_response(system, alpha_beta, t_steps, q, nu, nz, n, sysd.Ts);
 
-info_state = zeros((nz + nu)*q + nu, 1);
+%% free response experiment to calculate the markov parameters for first q steps. 
 
-y_predicted = zeros(nz, t_steps);
+%free_response_exp(system, q);
 
+%% Find open loop markov parameters
 
-for k = q+1:t_steps 
-    
-    info_state(1:nu,:) = U((k-1)*nu +1: k*nu,rollout_id)
-    
-    for i = 1:q
-
-        info_state(nu + (i-1)*nz + 1: nu + i*nz) = y_matrix((k - 1 - i)*nz + 1: (k-i)*nz, rollout_id)
-
-        info_state(nu + q*nz + (i-1)*nu + 1:nu + q*nz + i*nu) = U((k - 1 - i)*nu +1: (k-i)*nu, rollout_id)
-    end
-
-    y_predicted(:,k) = alpha_beta((k-1)*nz + 1: k*nz,:)*info_state
-
-end
-
-y_true = reshape(y_matrix(:,rollout_id), nz, t_steps);
-err_y = y_true - y_predicted;
-
-figure;
-plot(1:t_steps, err_y, 'Linewidth',2);
-
-xlabel('time steps');
-ylabel('Error in prediction');
+markov_open_loop = calculate_open_loop_markov_para_ltv(nu, nz,...
+                             num_mp, alpha_beta, ID_time_idxs, t_steps, q);
