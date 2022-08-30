@@ -15,12 +15,12 @@ X0 = normrnd(0, 20, n, N);
 t_steps = q+10;
 y_matrix = zeros(nz*t_steps, N);
 
-
+n_cols = 1; %number of time steps in Hankel columns
 u_vec = zeros(nu, t_steps);
 
 %calculate A,B,C
 for k= 1:q+1
-    
+    k
     for i=1:N
 
         x0 = X0(:,i); 
@@ -46,18 +46,10 @@ for k= 1:q+1
     if k~=1 
         A_hat(:,:,k-1) = X_hat*pinv(X_hat_prev); %A calculation
         
-        for j = k:q+k-1
-            
-            alpha = alpha_beta((j-1)*nz + 1: j*nz, nu + (j-2)*nz + 1:nu + (j-1)*nz);
-            beta = alpha_beta((j-1)*nz + 1: j*nz, nu + (j-1)*nz + (j-2)*nu + 1:nu + (j-1)*nz + (j-1)*nu);
-            
-            Hankel((j-k)*nz + 1: (j-k+1)*nz,:) = [alpha, beta];
-        end
+        Hankel = build_hankel(alpha_beta,q, k, n_cols, nz, nu);
         
         B_hat(:,:,k-1) = pinv(O_hat)*Hankel;
     end
-    
-    
 
     if k<=q
         C_hat(:,:,k) = O_hat(1:nz,:);
