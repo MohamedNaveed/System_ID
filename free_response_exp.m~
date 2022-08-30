@@ -46,12 +46,12 @@ for k= 1:q+1
     if k~=1 
         A_hat(:,:,k-1) = X_hat*pinv(X_hat_prev); %A calculation
         
-        for j = k:q+k-1
+        for j = 1:q
             
-            alpha = alpha_beta((j-1)*nz + 1: j*nz, nu + (j-2)*nz + 1:nu + (j-1)*nz);
-            beta = alpha_beta((j-1)*nz + 1: j*nz, nu + (j-1)*nz + (j-2)*nu + 1:nu + (j-1)*nz + (j-1)*nu);
+            alpha = alpha_beta((j-1)*nz + 1: j*nz, nu + (k-1)*nz + 1:nu + k*nz);
+            beta = alpha_beta((j-1)*nz + 1: j*nz, nu + (k-1)*nz + (k-1)*nu + 1:nu + q*nz + k*nu);
             
-            Hankel((j-k)*nz + 1: (j-k+1)*nz,:) = [alpha, beta];
+            Hankel((j-1)*nz + 1: j*nz,:) = [alpha, beta];
         end
         
         B_hat(:,:,k-1) = pinv(O_hat)*Hankel;

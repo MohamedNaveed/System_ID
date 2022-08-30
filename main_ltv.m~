@@ -13,6 +13,7 @@ nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
 
 x0 = zeros(n,1);
+%x0 = ones(n,1);
 
 t_steps = 20;
 
@@ -56,36 +57,31 @@ num_mp = 10; % number of markov parameters
 Y_true = calculate_true_markov_parameters_ltv(system,num_mp);
 
 %% build data (V) matrix and calculate the ARMA parameters
-
 alpha_beta = zeros(nz*t_steps, q*(nz + nu) +  nu);
 
 rank_V = [];
-ID_time_idxs = q+1:t_steps;
+ID_time_idxs = 1:t_steps;
 
-for k = ID_time_idxs % k is the time step at which the ARMA is identified.
-
-    V = build_data_mat_ltv(U, y_matrix, q, nu, nz, k, no_rollouts);
-
-    alpha_beta((k-1)*nz + 1: k*nz,:) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V); %moore penrose inverse. 
-    rank_V = [rank_V rank(V)];
-end
-
-%% ARMA for first few time steps. 
-
-for k = 1:q
+for k = ID_time_idxs
     
     V = build_data_mat_ltv(U, y_matrix, q, nu, nz, k, no_rollouts);
-    alpha_beta((k-1)*nz + 1: k*nz,:) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);
+    
+    if k<= q
+        alpha_beta((k-1)*nz + 1: k*nz,1:(k-1)*(nu+nz)+nu) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);%moore penrose inverse.
+    else
+        alpha_beta((k-1)*nz + 1: k*nz,:) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);  
+    end
+    rank_V = [rank_V rank(V)];
     
 end
 
 %% checking response. 
 
-check_response(y_matrix, alpha_beta, U, t_steps, q, nu, nz);
+check_response(system, alpha_beta, t_steps, q, nu, nz, n, sysd.Ts);
 
 %% free response experiment to calculate the markov parameters for first q steps. 
 
-%free_response_exp(system, q);
+free_response_exp(system, q);
 
 %% Find open loop markov parameters
 
