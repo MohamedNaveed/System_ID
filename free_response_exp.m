@@ -1,4 +1,4 @@
-function [A_hat, C_hat] = free_response_exp(system, q, alpha_beta)
+function [A_hat_tilde, B_hat_tilde, C_hat_tilde] = free_response_exp(system, q, alpha_beta)
 
 if strcmp(system,'oscillator')
     sysd = oscillator(0);
@@ -39,6 +39,7 @@ for k= 1:q+1
     root_Sig = Sig(1:rank_Sig,1:rank_Sig)^(1/2);
 
     O_hat = U(:,1:rank_Sig)*root_Sig;
+        
     X_hat = root_Sig*V(:,1:rank_Sig)';
     
     Hankel = zeros(nz*q, nz + nu);
@@ -55,6 +56,34 @@ for k= 1:q+1
         C_hat(:,:,k) = O_hat(1:nz,:);
     end
     X_hat_prev = X_hat;
+    
+    % transforming to reference coordinates. 
+    
+    if k==1
+        C_hat_tilde(:,:,k) = C_hat(:,:,k);
+        O_hat_k_1 = O_hat;
+        
+    elseif k==2
+        
+        T_tilde = pinv(O_hat_k_1)*O_hat;
+        C_hat_tilde(:,:,k) = C_hat(:,:,k)*inv(T_tilde);
+        
+        B_hat_tilde(:,:,k-1) = B_hat(:,:,k-1);
+        A_hat_tilde(:,:,k-1) = A_hat(:,:,k-1);
+        T_tilde_prev = T_tilde;
+        
+    elseif k>=3
+        
+        T_tilde = pinv(O_hat_k_1)*O_hat;
+        
+        if k<=q
+            C_hat_tilde(:,:,k) = C_hat(:,:,k)*inv(T_tilde);
+        end
+        B_hat_tilde(:,:,k-1) = T_tilde*B_hat(:,:,k-1);
+        A_hat_tilde(:,:,k-1) = T_tilde*A_hat(:,:,k-1)*inv(T_tilde_prev);
+        T_tilde_prev = T_tilde;
+    end
+    
 end
 end
 

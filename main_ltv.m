@@ -75,13 +75,13 @@ for k = ID_time_idxs
     
 end
 
-%% checking response. 
+%% checking response for ARMA model
 
 check_response(system, alpha_beta, t_steps, q, nu, nz, n, sysd.Ts);
 
 %% free response experiment to calculate the markov parameters for first q steps. 
 
-free_response_exp(system, q, alpha_beta);
+[A_hat, B_hat, C_hat] = free_response_exp(system, q, alpha_beta);
 
 %% Find open loop markov parameters
 

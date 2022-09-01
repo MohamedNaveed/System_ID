@@ -15,12 +15,12 @@ X0 = normrnd(0, 20, n, N);
 t_steps = q+10;
 y_matrix = zeros(nz*t_steps, N);
 
-
+n_cols = 1; %number of time steps in Hankel columns
 u_vec = zeros(nu, t_steps);
-N=
+
 %calculate A,B,C
 for k= 1:q+1
-    
+    k
     for i=1:N
 
         x0 = X0(:,i); 
@@ -39,6 +39,7 @@ for k= 1:q+1
     root_Sig = Sig(1:rank_Sig,1:rank_Sig)^(1/2);
 
     O_hat = U(:,1:rank_Sig)*root_Sig;
+        
     X_hat = root_Sig*V(:,1:rank_Sig)';
     
     Hankel = zeros(nz*q, nz + nu);
@@ -50,13 +51,38 @@ for k= 1:q+1
         
         B_hat(:,:,k-1) = pinv(O_hat)*Hankel;
     end
-    
-    
 
     if k<=q
         C_hat(:,:,k) = O_hat(1:nz,:);
     end
     X_hat_prev = X_hat;
+    
+    % transforming to reference coordinates. 
+    
+    if k==1
+        C_hat_tilde(:,:,k) = C_hat(:,:,k);
+        O_hat_k_1 = O_hat;
+        
+    elseif k==2
+        
+        T_tilde = pinv(O_hat_k_1)*O_hat;
+        if k<=q
+        C_hat_tilde(:,:,k) = C_hat(:,:,k)*inv(T_tilde);
+        
+        B_hat_tilde(:,:,k-1) = B_hat(:,:,k-1);
+        A_hat_tilde(:,:,k-1) = A_hat(:,:,k-1);
+        T_tilde_prev = T_tilde;
+        
+    elseif k>=3
+        
+        T_tilde = pinv(O_hat_k_1)*O_hat;
+        C_hat_tilde(:,:,k) = C_hat(:,:,k)*inv(T_tilde);
+        
+        B_hat_tilde(:,:,k-1) = T_tilde*B_hat(:,:,k-1);
+        A_hat_tilde(:,:,k-1) = T_tilde*A_hat(:,:,k-1)*inv(T_tilde_prev);
+        T_tilde_prev = T_tilde;
+    end
+    
 end
 end
 
