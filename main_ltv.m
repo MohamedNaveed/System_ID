@@ -52,7 +52,7 @@ q = 3; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 10; % number of markov parameters
+num_mp = 20; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters_ltv(system,num_mp, t_steps);
 

@@ -12,7 +12,7 @@ for k = 1:q-1
    for gamma = 1:k
        gamma
        beta_k_gamma = alpha_beta((k)*nz + 1: (k+1)*nz, nu + (k)*nz + (gamma-1)*nu + 1:nu + (k)*nz + gamma*nu);
-       alpha_k_gamma = alpha_beta((k)*nz + 1: (k+1)*nz, nu + (gamma-1)*nz + 1:nu + gamma*nz);
+       alpha_k_gamma = -alpha_beta((k)*nz + 1: (k+1)*nz, nu + (gamma-1)*nz + 1:nu + gamma*nz);
        
        temp = beta_k_gamma - alpha_k_gamma*D_est;
        
@@ -22,15 +22,17 @@ for k = 1:q-1
            for j = 1:sum_limit
                 j
                 
-                alpha_k_j = alpha_beta((k)*nz + 1: (k+1)*nz, nu + (j-1)*nz + 1:nu + j*nz);
+                alpha_k_j = -alpha_beta((k)*nz + 1: (k+1)*nz, nu + (j-1)*nz + 1:nu + j*nz);
                 
-                mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu;
+                %mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu;
+                mp_cols = nu + (gamma -j - 1)*nu + 1:nu + (gamma - j)*nu; 
                 temp = temp -  alpha_k_j*markov_open_loop((k-j)*nz + 1: (k+1-j)*nz, mp_cols);
                 
             end
        end
        
-       mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu; %columns for markov parameters. 
+       %mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu; %columns for markov parameters. 
+       mp_cols = nu + (gamma - 1)*nu + 1:nu + (gamma)*nu; 
        markov_open_loop((k)*nz + 1: (k+1)*nz, mp_cols) = temp;
    end
     
@@ -49,7 +51,7 @@ for k = q:t_steps-1  % k is the time step at which the ARMA is identified.
         
         if gamma <= q
             beta_k_gamma = alpha_beta((k)*nz + 1: (k+1)*nz, nu + q*nz + (gamma-1)*nu + 1:nu + q*nz + gamma*nu);
-            alpha_k_gamma = alpha_beta((k)*nz + 1: (k+1)*nz, nu + (gamma-1)*nz + 1:nu + gamma*nz);
+            alpha_k_gamma = -alpha_beta((k)*nz + 1: (k+1)*nz, nu + (gamma-1)*nz + 1:nu + gamma*nz);
         else
             beta_k_gamma = zeros(nz,nu);
             alpha_k_gamma = zeros(nz,nz);
@@ -67,15 +69,17 @@ for k = q:t_steps-1  % k is the time step at which the ARMA is identified.
             for j = 1:sum_limit
                 j
   
-                alpha_k_j = alpha_beta((k)*nz + 1: (k+1)*nz, nu + (j-1)*nz + 1:nu + j*nz);
+                alpha_k_j = -alpha_beta((k)*nz + 1: (k+1)*nz, nu + (j-1)*nz + 1:nu + j*nz);
                
-                mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu;
+                %mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu;
+                mp_cols = nu + (gamma - j - 1)*nu + 1:nu + (gamma- j)*nu; 
                 temp = temp -  alpha_k_j*markov_open_loop((k-j)*nz + 1: (k-j + 1)*nz,  mp_cols);
         
                 
             end
         end
-        mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu;
+        %mp_cols = (num_mp - (k-gamma) - 1)*nu + 1: (num_mp - (k-gamma))*nu;
+        mp_cols = nu + (gamma - 1)*nu + 1:nu + (gamma)*nu; 
         markov_open_loop((k)*nz + 1: (k+1)*nz, mp_cols) = temp;
                 
     end

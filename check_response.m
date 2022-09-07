@@ -37,7 +37,8 @@ for k = 1:t_steps
         end
         for i = i_idx
                 
-                mp_rows = (num_mp - (k-i-1) - 1)*nu + 1: (num_mp - (k-i-1))*nu;
+                %mp_rows = (num_mp - (k-i-1) - 1)*nu + 1: (num_mp - (k-i-1))*nu;
+                mp_rows = nu + (i - 1)*nu + 1:nu + (i)*nu;
                 control_state(mp_rows,:) = u_vec(:,k-i);
         end
         
@@ -57,7 +58,8 @@ for k = 1:t_steps
                 info_state(nu + (i-1)*nz + 1: nu + i*nz) = y_predicted_arma(:,k-i);
                 info_state(nu + (k-1)*nz + (i-1)*nu + 1:nu + (k-1)*nz + i*nu) = u_vec(:,k-i);
                 
-                mp_rows = (num_mp - (k-i-1) - 1)*nu + 1: (num_mp - (k-i-1))*nu;
+                %mp_rows = (num_mp - (k-i-1) - 1)*nu + 1: (num_mp - (k-i-1))*nu;
+                mp_rows = nu + (i - 1)*nu + 1:nu + (i)*nu;
                 control_state(mp_rows,:) = u_vec(:,k-i);
             end
         end
@@ -72,15 +74,16 @@ err_y_arma = y_true - y_predicted_arma;
 err_y_open_loop = y_true - y_predicted_open_loop;
 
 figure;
-plot(1:t_steps, err_y_arma, 'Linewidth',2);
+plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',2, 'DisplayName', 'ARMA out');
+hold on;
+plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',2,'HandleVisibility','off');
+plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',2, 'DisplayName', 'MA out');
+plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',2,'HandleVisibility','off');
 
 xlabel('time steps');
-ylabel('Error in prediction using ARMA');
+ylabel('Error in prediction');
 
-figure;
-plot(1:t_steps, err_y_open_loop, 'Linewidth',2);
+legend('Location','NorthWest');
 
-xlabel('time steps');
-ylabel('Error in prediction using Markov Open-Loop');
 end
 

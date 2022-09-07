@@ -17,7 +17,7 @@ for k = 1:t_steps
         info_state = zeros((nz + nu)*q + nu, 1);
         info_state(1:nu,:) = u_vec(:,k);
         
-        control_state = zero(nu*num_mp,1); % for moving average model
+        control_state = zeros(nu*num_mp,1); % for moving average model
         control_state(1:nu,:) = u_vec(:,k);
         
         for i = 1:q
@@ -48,7 +48,7 @@ for k = 1:t_steps
         info_state = zeros((nz + nu)*(k-1) + nu, 1); %for arma model
         info_state(1:nu,:) = u_vec(:,k);
         
-        control_state = zero(nu*num_mp,1); % for moving average model
+        control_state = zeros(nu*num_mp,1); % for moving average model
         control_state(1:nu,:) = u_vec(:,k);
         
         if k~=1
@@ -58,6 +58,7 @@ for k = 1:t_steps
                 info_state(nu + (k-1)*nz + (i-1)*nu + 1:nu + (k-1)*nz + i*nu) = u_vec(:,k-i);
                 
                 mp_rows = (num_mp - (k-i-1) - 1)*nu + 1: (num_mp - (k-i-1))*nu;
+                mp_cols = nu + (gamma - 1)*nu + 1:nu + (gamma)*nu;
                 control_state(mp_rows,:) = u_vec(:,k-i);
             end
         end
@@ -68,13 +69,20 @@ for k = 1:t_steps
     end
 end
 
-err_y = y_true - y_predicted_arma;
+err_y_arma = y_true - y_predicted_arma;
+err_y_open_loop = y_true - y_predicted_open_loop;
 
 figure;
-plot(1:t_steps, err_y, 'Linewidth',2);
+plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',2, 'DisplayName', 'ARMA out');
+hold on;
+plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',2,'HandleVisibility','off');
+plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',2, 'DisplayName', 'MA out');
+plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',2,'HandleVisibility','off');
 
 xlabel('time steps');
 ylabel('Error in prediction');
+
+legend('Location','NorthWest');
 
 end
 
