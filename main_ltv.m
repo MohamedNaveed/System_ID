@@ -57,6 +57,7 @@ num_mp = 10; % number of markov parameters
 Y_true = calculate_true_markov_parameters_ltv(system,num_mp);
 
 %% build data (V) matrix and calculate the ARMA parameters
+
 alpha_beta = zeros(nz*t_steps, q*(nz + nu) +  nu);
 
 rank_V = [];
@@ -79,11 +80,12 @@ end
 
 check_response(system, alpha_beta, t_steps, q, nu, nz, n, sysd.Ts);
 
-%% free response experiment to calculate the markov parameters for first q steps. 
-
-[A_hat, B_hat, C_hat] = free_response_exp(system, q, alpha_beta);
-
 %% Find open loop markov parameters
 
 markov_open_loop = calculate_open_loop_markov_para_ltv(nu, nz,...
                              num_mp, alpha_beta, ID_time_idxs, t_steps, q);
+                         
+%% free response experiment to calculate the markov parameters for first q steps. 
+
+[A_hat, B_hat, C_hat] = free_response_exp(system, q, alpha_beta);
+

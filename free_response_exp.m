@@ -54,6 +54,7 @@ for k= 1:q+1
 
     if k<=q
         C_hat(:,:,k) = O_hat(1:nz,:);
+        D_hat_tilde(:,:,k) = alpha_beta((k-1)*nz + 1 : k*nz, 1:nu);
     end
     X_hat_prev = X_hat;
     
