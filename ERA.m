@@ -19,7 +19,7 @@ end
 
 order = n;
 P_b = R(:,1:order)*(Sig(1:order,1:order)^(1/2));
-Q_b = S(:,1:order)*(Sig(1:order,1:order)^(1/2));
+Q_b = (Sig(1:order,1:order)^(1/2))*S(:,1:order)';
 
 %% Estimation of A,B,C
 
@@ -34,7 +34,7 @@ end
 inv_Sig = inv(Sig(1:order,1:order)^(1/2));
 A_est = inv_Sig*R(:,1:order)'*H_1*S(:,1:order)*inv_Sig;
 C_est = P_b(1:nz,:);
-B_est = Q_b(1:nu,:)';
+B_est = Q_b(:,1:nu); %TODO
 
 
 end

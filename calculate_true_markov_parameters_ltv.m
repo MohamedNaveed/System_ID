@@ -13,7 +13,7 @@ del_t = sysd.Ts;
 
 
 for t = 0:t_steps-1
-    t
+    
     Phi = eye(n);
     
     temp = oscillator(t*del_t);
@@ -29,7 +29,7 @@ for t = 0:t_steps-1
     end
     
     for i = i_uplimit:-1:i_lowlimit
-        i
+        
         if i == i_uplimit
 
             Y_true(t*nz + 1:(t+1)*nz, 1:nu) = temp.D;

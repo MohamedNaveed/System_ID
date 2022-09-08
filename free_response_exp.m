@@ -1,4 +1,4 @@
-function [A_hat_tilde, B_hat_tilde, C_hat_tilde] = free_response_exp(system, q, alpha_beta)
+function [A_hat_tilde, B_hat_tilde, C_hat_tilde] = free_response_exp(system, q, markov_open_loop)
 
 if strcmp(system,'oscillator')
     sysd = oscillator(0);
@@ -47,14 +47,14 @@ for k= 1:q+1
     if k~=1 
         A_hat(:,:,k-1) = X_hat*pinv(X_hat_prev); %A calculation
         
-        Hankel = build_hankel(alpha_beta,q, k, n_cols, nz, nu);
+        Hankel = build_hankel_OL(markov_open_loop,q, k, n_cols, nz, nu);
         
         B_hat(:,:,k-1) = pinv(O_hat)*Hankel;
     end
 
     if k<=q
         C_hat(:,:,k) = O_hat(1:nz,:);
-        D_hat_tilde(:,:,k) = alpha_beta((k-1)*nz + 1 : k*nz, 1:nu);
+        D_hat_tilde(:,:,k) = markov_open_loop((k-1)*nz + 1 : k*nz, 1:nu);
     end
     X_hat_prev = X_hat;
     

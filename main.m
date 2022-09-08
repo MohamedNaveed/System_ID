@@ -2,9 +2,9 @@
 clc;clear;
 
 % get system 
-%sysd = spring_mass_damper();
+sysd = spring_mass_damper();
 %sysd = OKID_paper_sys();
-sysd = one_dim_sys();
+%sysd = one_dim_sys();
 
 rng(0);
 n = size(sysd.A,1); % order of the system
