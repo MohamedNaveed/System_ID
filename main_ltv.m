@@ -91,14 +91,11 @@ fprintf('Calculated open-loop markov parameters\n\n');
 
 check_response(system, alpha_beta, markov_open_loop, t_steps, q, nu, nz, n, sysd.Ts, num_mp);
 
-%% free response experiment to calculate the markov parameters for first q steps. 
-
-%[A_hat, B_hat, C_hat] = free_response_exp(system, q, markov_open_loop);
 
 %% build hankel to estimate A,B,C
 
-[A_hat, B_hat, C_hat] = TVERA(markov_open_loop, q, nu, nz, t_steps);
+[A_hat, B_hat, C_hat, D_hat, Trans_q] = TVERA(system, markov_open_loop, q, nu, nz, t_steps);
 
 %% calculate open-loop markov parameters from A,B,C
 
-markov_parameters_ABC = calculate_markov_from_ABC(A_hat, B_hat, C_hat,q,t_steps,num_mp);
+markov_parameters_ABC = calculate_markov_from_ABC(A_hat, B_hat, C_hat, D_hat, q,t_steps,num_mp, Trans_q);

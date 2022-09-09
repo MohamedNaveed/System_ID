@@ -1,4 +1,4 @@
-function [A_hat_tilde, B_hat_tilde, C_hat_tilde] = free_response_exp(system, q, markov_open_loop)
+function [A_hat_tilde, B_hat_tilde, C_hat_tilde, O_hat] = free_response_exp(system, q, markov_open_loop)
 
 if strcmp(system,'oscillator')
     sysd = oscillator(0);
@@ -18,10 +18,7 @@ y_matrix = zeros(nz*t_steps, N);
 n_cols = 1; %number of time steps in Hankel columns
 u_vec = zeros(nu, t_steps);
 
-%calculate A,B,C
-for k= 1:q+1
-    k
-    for i=1:N
+for i=1:N
 
         x0 = X0(:,i); 
         if strcmp(system,'oscillator')
@@ -30,9 +27,13 @@ for k= 1:q+1
 
         y_matrix(:,i) = reshape(y, nz*t_steps,1); 
 
-    end
+end
 
-    [U,Sig,V] = svd(y_matrix((k-1)*nz + 1: (k+q-1)*nz,:));
+%calculate A,B,C
+for k= 0:q
+    k
+    
+    [U,Sig,V] = svd(y_matrix((k)*nz + 1: (k+q)*nz,:));
 
     rank_Sig = rank(Sig);
 
@@ -42,49 +43,59 @@ for k= 1:q+1
         
     X_hat = root_Sig*V(:,1:rank_Sig)';
     
-    Hankel = zeros(nz*q, nz + nu);
     
-    if k~=1 
-        A_hat(:,:,k-1) = X_hat*pinv(X_hat_prev); %A calculation
+    if k~=0
+        A_hat(:,:,k) = X_hat*pinv(X_hat_prev); %A calculation
         
         Hankel = build_hankel_OL(markov_open_loop,q, k, n_cols, nz, nu);
         
-        B_hat(:,:,k-1) = pinv(O_hat)*Hankel;
+        B_hat(:,:,k) = pinv(O_hat)*Hankel(1:q*nz,:);
     end
 
     if k<=q
-        C_hat(:,:,k) = O_hat(1:nz,:);
-        D_hat_tilde(:,:,k) = markov_open_loop((k-1)*nz + 1 : k*nz, 1:nu);
+        C_hat(:,:,k+1) = O_hat(1:nz,:);
+        D_hat_tilde(:,:,k+1) = markov_open_loop((k)*nz + 1 : (k+1)*nz, 1:nu);
     end
     X_hat_prev = X_hat;
     
     % transforming to reference coordinates. 
     
-    if k==1
-        C_hat_tilde(:,:,k) = C_hat(:,:,k);
+    if k==0
+        C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1);
         O_hat_k_1 = O_hat;
+       
+    elseif k==1
         
-    elseif k==2
+        %T_tilde = pinv(O_hat_k_1)*O_hat;
+        %C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1)*inv(T_tilde);
+        C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1);
         
-        T_tilde = pinv(O_hat_k_1)*O_hat;
-        C_hat_tilde(:,:,k) = C_hat(:,:,k)*inv(T_tilde);
+        %B_hat_tilde(:,:,k) = T_tilde*B_hat(:,:,k);
+        B_hat_tilde(:,:,k) = B_hat(:,:,k);
         
-        B_hat_tilde(:,:,k-1) = B_hat(:,:,k-1);
-        A_hat_tilde(:,:,k-1) = A_hat(:,:,k-1);
-        T_tilde_prev = T_tilde;
+        %A_hat_tilde(:,:,k) = T_tilde*A_hat(:,:,k);
+        A_hat_tilde(:,:,k) = A_hat(:,:,k);
         
-    elseif k>=3
+        %T_tilde_prev = T_tilde;
         
-        T_tilde = pinv(O_hat_k_1)*O_hat;
+    elseif k>=2
         
-        if k<=q
-            C_hat_tilde(:,:,k) = C_hat(:,:,k)*inv(T_tilde);
+        %T_tilde = pinv(O_hat_k_1)*O_hat;
+        
+        if k<=q-1
+            %C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1)*inv(T_tilde);
+            C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1);
         end
-        B_hat_tilde(:,:,k-1) = T_tilde*B_hat(:,:,k-1);
-        A_hat_tilde(:,:,k-1) = T_tilde*A_hat(:,:,k-1)*inv(T_tilde_prev);
-        T_tilde_prev = T_tilde;
+        %B_hat_tilde(:,:,k) = T_tilde*B_hat(:,:,k);
+        B_hat_tilde(:,:,k) = B_hat(:,:,k);
+        
+        %A_hat_tilde(:,:,k) = T_tilde*A_hat(:,:,k)*inv(T_tilde_prev);
+        A_hat_tilde(:,:,k) = A_hat(:,:,k);
+        
+        %T_tilde_prev = T_tilde;
     end
     
 end
+
 end
 
