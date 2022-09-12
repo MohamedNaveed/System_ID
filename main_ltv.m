@@ -15,7 +15,7 @@ nz = size(sysd.C,1); % number of outputs
 x0 = zeros(n,1);
 %x0 = ones(n,1);
 
-t_steps = 20;
+t_steps = 60;
 
 no_rollouts = 50; 
 
@@ -53,7 +53,7 @@ q = 3; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
-num_mp = 20; % number of markov parameters
+num_mp = t_steps; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters_ltv(system,num_mp, t_steps);
 
@@ -87,15 +87,17 @@ markov_open_loop = calculate_open_loop_markov_para_ltv(nu, nz,...
 
 fprintf('Calculated open-loop markov parameters\n\n');
 
-%% checking response for ARMA model
-
-check_response(system, alpha_beta, markov_open_loop, t_steps, q, nu, nz, n, sysd.Ts, num_mp);
-
 
 %% build hankel to estimate A,B,C
 
 [A_hat, B_hat, C_hat, D_hat, Trans_q] = TVERA(system, markov_open_loop, q, nu, nz, t_steps);
 
+fprintf('Calculated A, B, C \n\n');
 %% calculate open-loop markov parameters from A,B,C
 
-markov_parameters_ABC = calculate_markov_from_ABC(A_hat, B_hat, C_hat, D_hat, q,t_steps,num_mp, Trans_q);
+markov_parameters_ABC = calculate_markov_from_ABC(A_hat, B_hat, C_hat, D_hat, q,t_steps,num_mp);
+
+fprintf('Calculated open-loop markov parameters from A, B, C\n\n');
+%% checking response for ARMA model
+
+check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC, t_steps, q, nu, nz, n, sysd.Ts, num_mp);

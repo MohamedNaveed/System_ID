@@ -61,18 +61,22 @@ for k= 0:q
     % transforming to reference coordinates. 
     
     if k==0
+        
         C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1);
-        O_hat_k_1 = O_hat;
+        O_hat_ref = O_hat;
        
     elseif k==1
         
-        %T_tilde = pinv(O_hat_k_1)*O_hat;
+        T_tilde = pinv(O_hat_ref)*O_hat;
         C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1)*inv(T_tilde);
-        C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1);
-        %B_hat_tilde(:,:,k) = T_tilde*B_hat(:,:,k);
-        B_hat_tilde(:,:,k) = B_hat(:,:,k);
-        %A_hat_tilde(:,:,k) = T_tilde*A_hat(:,:,k);
-        A_hat_tilde(:,:,k) = A_hat(:,:,k);
+        %C_hat_tilde(:,:,k+1) = C_hat(:,:,k+1);
+        
+        B_hat_tilde(:,:,k) = T_tilde*B_hat(:,:,k);
+        %B_hat_tilde(:,:,k) = B_hat(:,:,k);
+        
+        A_hat_tilde(:,:,k) = T_tilde*A_hat(:,:,k);
+        %A_hat_tilde(:,:,k) = A_hat(:,:,k);
+        
         %T_tilde_prev = T_tilde;
         
     elseif k>=2
@@ -85,8 +89,10 @@ for k= 0:q
         end
         %B_hat_tilde(:,:,k) = T_tilde*B_hat(:,:,k);
         B_hat_tilde(:,:,k) = B_hat(:,:,k);
+        
         %A_hat_tilde(:,:,k) = T_tilde*A_hat(:,:,k)*inv(T_tilde_prev);
         A_hat_tilde(:,:,k) = A_hat(:,:,k);
+        
         %T_tilde_prev = T_tilde;
     end
     

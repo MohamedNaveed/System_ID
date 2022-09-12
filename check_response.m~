@@ -79,23 +79,23 @@ err_y_ABC = y_true - y_predicted_ABC;
 
 figure;
 subplot(2,1,1)
-plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA output 1');
+plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',2, 'DisplayName', 'ARMA output 1');
 hold on;
-plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop out 1');
-plot(1:(t_steps-q-1), err_y_ABC(1,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'ABC model out 1');
+plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',2, 'DisplayName', 'Open-loop out 1');
+plot(1:(t_steps-q-1), err_y_ABC(1,1:(t_steps-q-1)),':', 'Linewidth',2, 'DisplayName', 'ABC model out 1');
 ylabel('Error in prediction');
-legend();
+legend('Location','SouthWest');
 
 subplot(2,1,2)
-plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA output 2');
+plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',2, 'DisplayName', 'ARMA output 2');
 hold on;
-plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop out 2');
-plot(1:(t_steps-q-1), err_y_ABC(2,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'ABC model out 2');
+plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',2, 'DisplayName', 'Open-loop out 2');
+plot(1:(t_steps-q-1), err_y_ABC(2,1:(t_steps-q-1)),':y', 'Linewidth',2, 'DisplayName', 'ABC model out 2');
 
 xlabel('time steps');
 ylabel('Error in prediction');
 
-legend();
+legend('Location','SouthWest');
 
 end
 
