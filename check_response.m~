@@ -88,9 +88,6 @@ end
 x_hat = zeros(n,1);
 
 for k = 1:t_steps
-    
-    y_predicted_ABCG(:,k) = C_hat(:,:,k)*x_hat + D_hat*u_vec(:,k);
-    
     x_hat = (A_hat(:,:,k) + G_hat(:,:,k)*C_hat(:,:,k))*x_hat + ...
         (B_hat(:,:,k) + G_hat(:,:,k)*D_hat)*u_vec(:,k) - ...
         G_hat(:,:,k)*y_predicted_ABCG(:,k);
@@ -98,14 +95,13 @@ end
 err_y_arma = (y_true - y_predicted_arma)./abs(y_true);
 err_y_open_loop = (y_true - y_predicted_open_loop)./abs(y_true);
 err_y_ABC = (y_true - y_predicted_ABC)./abs(y_true);
-err_y_ABCG = (y_true - y_predicted_ABCG)./abs(y_true);
 
 figure;
 subplot(2,1,1)
 plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA');
 hold on;
 plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop markov');
-plot(1:(t_steps-q-1), err_y_ABCG(1,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'TV-OKID');
+plot(1:(t_steps-q-1), err_y_ABC(1,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'TV-OKID');
 ylabel('Error in output-1');
 %ylim([-0.1, 0.4]);
 legend('Location', 'NorthWest');
@@ -114,7 +110,7 @@ subplot(2,1,2)
 plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',3);
 hold on;
 plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',3);
-plot(1:(t_steps-q-1), err_y_ABCG(2,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3);
+plot(1:(t_steps-q-1), err_y_ABC(2,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3);
 %ylim([-5e-12, 5e-12]);
 xlabel('time steps');
 ylabel('Error in output-2');

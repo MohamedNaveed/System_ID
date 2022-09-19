@@ -87,17 +87,31 @@ markov_open_loop = calculate_open_loop_markov_para_ltv(nu, nz,...
 
 fprintf('Calculated open-loop markov parameters\n\n');
 
+%% calculate observer gain matrix
 
+h_o = calculate_observer_gain_markov(nu, nz, num_mp, alpha_beta,...
+        ID_time_idxs, t_steps, q);
+
+fprintf('Calculated observer markov parameters \n\n');
 %% build hankel to estimate A,B,C
 
-[A_hat, B_hat, C_hat, D_hat] = TVERA(system, markov_open_loop, q, nu, nz, t_steps);
+[A_hat, B_hat, C_hat, D_hat, G_hat] = TVERA(system, markov_open_loop, q, nu, nz, t_steps, h_o);
 
-fprintf('Calculated A, B, C \n\n');
+fprintf('Calculated A, B, C, G \n\n');
+
+
 %% calculate open-loop markov parameters from A,B,C
 
 markov_parameters_ABC = calculate_markov_from_ABC(A_hat, B_hat, C_hat, D_hat, q,t_steps,num_mp);
 
 fprintf('Calculated open-loop markov parameters from A, B, C\n\n');
+
+%% calculate observer in the loop markov parameters
+
+closed_loop_markov_parameters = calculate_markov_from_ABCG(A_hat, B_hat, C_hat, D_hat, G_hat, q,t_steps,num_mp);
+
 %% checking response for ARMA model
 
-check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC, t_steps, q, nu, nz, n, sysd.Ts, num_mp);
+check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC,...
+            t_steps, q, nu, nz, n, sysd.Ts, num_mp, U, y_matrix,...
+            A_hat, B_hat, C_hat, D_hat, G_hat);

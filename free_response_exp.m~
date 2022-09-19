@@ -1,5 +1,4 @@
-function [A_hat_tilde, B_hat_tilde, C_hat_tilde, G_hat_tilde, O_hat_ref] = ...
-    free_response_exp(system, q, markov_open_loop, nu, nz, h_o)
+function [A_hat_tilde, B_hat_tilde, C_hat_tilde, O_hat_ref] = free_response_exp(system, q, markov_open_loop, nu, nz)
 
 if strcmp(system,'oscillator')
     sysd = oscillator(0);
@@ -65,9 +64,9 @@ for k= 0:q
         
         B_hat(:,:,k) = pinv(O_hat)*Hankel(1:q*nz,:);
         
-        P_k = calculate_P(h_o, k, q, nz);
+        P = calculate_P(h_o, k, q, nz);
         
-        G_hat(:,:,k) = pinv(O_hat)*P_k;
+        G_hat(:,:,k) = pinv(O_hat)*P;
         
     end
 

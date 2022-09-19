@@ -1,6 +1,6 @@
 clc; clear;
 
-load('cartpole_data_x0=0.mat');
+load('data/cartpole_data_initial_u0.mat');
 Model.name
 nu = Model.nu; % number of control inputs
 nz = Task.nm; % number of outputs

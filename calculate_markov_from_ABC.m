@@ -6,7 +6,7 @@ n = size(A_hat,1);
 
 markov_parameters_ABC = zeros(t_steps*nz,num_mp*nu);
 
-for t = 0:t_steps-q-1
+for t = 0:t_steps-1
     
     Phi = eye(n);
     
