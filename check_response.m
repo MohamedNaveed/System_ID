@@ -1,14 +1,22 @@
-function [] = check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC, t_steps, q, nu, nz, n, Ts, num_mp)
+function [] = check_response(system, alpha_beta, markov_open_loop,...
+    markov_parameters_ABC, t_steps, q, nu, nz, n, Ts, num_mp, U, y_matrix)
 
 
-u_vec = normrnd(0, 20, nu, t_steps);
+
 y_predicted_arma = zeros(nz, t_steps);
 y_predicted_open_loop = zeros(nz, t_steps);
 y_predicted_ABC  = zeros(nz, t_steps);
-x0 = zeros(n,1);
 
+rng(0);
 if strcmp(system,'oscillator')
+        x0 = zeros(n,1);
+        u_vec = normrnd(0, 20, nu, t_steps);
         [x, y_true] = generate_response_oscillator(x0, u_vec, n, nz, Ts);%output
+        
+elseif strcmp(system,'cartpole')
+    roll_out_id = 50;
+    y_true = reshape(y_matrix(:,roll_out_id),[nz,t_steps]);
+    u_vec = reshape(U(:,roll_out_id),[nu,t_steps]);
 end
 
 for k = 1:t_steps 
@@ -73,29 +81,46 @@ for k = 1:t_steps
     end
 end
 
-err_y_arma = y_true - y_predicted_arma;
-err_y_open_loop = y_true - y_predicted_open_loop;
-err_y_ABC = y_true - y_predicted_ABC;
+err_y_arma = (y_true - y_predicted_arma)./abs(y_true);
+err_y_open_loop = (y_true - y_predicted_open_loop)./abs(y_true);
+err_y_ABC = (y_true - y_predicted_ABC)./abs(y_true);
 
 figure;
 subplot(2,1,1)
-plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA output 1');
+plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA');
 hold on;
-plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop out 1');
-plot(1:(t_steps-q-1), err_y_ABC(1,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'ABC model out 1');
-ylabel('Error in prediction');
-legend();
-
+plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop markov');
+plot(1:(t_steps-q-1), err_y_ABC(1,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'TV-OKID');
+ylabel('Error in output-1');
+%ylim([-0.1, 0.4]);
+legend('Location', 'NorthWest');
+%legend();
 subplot(2,1,2)
-plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA output 2');
+plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',3);
 hold on;
-plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop out 2');
-plot(1:(t_steps-q-1), err_y_ABC(2,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'ABC model out 2');
-
+plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',3);
+plot(1:(t_steps-q-1), err_y_ABC(2,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3);
+%ylim([-5e-12, 5e-12]);
 xlabel('time steps');
-ylabel('Error in prediction');
+ylabel('Error in output-2');
 
-legend();
-
+figure;
+subplot(2,1,1)
+plot(1:t_steps, err_y_arma(1,:),'b', 'Linewidth',3, 'DisplayName', 'ARMA');
+hold on;
+plot(1:t_steps, err_y_open_loop(1,:),'--r', 'Linewidth',3, 'DisplayName', 'Open-loop markov');
+%plot(1:(t_steps-q-1), err_y_ABC(1,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3, 'DisplayName', 'TV-OKID');
+ylabel('Error in output-1');
+%ylim([-0.1, 0.4]);
+legend('Location', 'NorthWest');
+%legend();
+subplot(2,1,2)
+plot(1:t_steps, err_y_arma(2,:),'b', 'Linewidth',3);
+hold on;
+plot(1:t_steps, err_y_open_loop(2,:),'--r', 'Linewidth',3);
+%plot(1:(t_steps-q-1), err_y_ABC(2,1:(t_steps-q-1)),':','Color',	'[0.4660 0.6740 0.1880]', 'Linewidth',3);
+%ylim([-5e-12, 5e-12]);
+xlabel('time steps');
+ylabel('Error in output-2');
 end
 

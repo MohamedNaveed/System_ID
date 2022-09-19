@@ -15,7 +15,7 @@ nz = size(sysd.C,1); % number of outputs
 x0 = zeros(n,1);
 %x0 = ones(n,1);
 
-t_steps = 60;
+t_steps = 100;
 
 no_rollouts = 50; 
 
@@ -70,7 +70,7 @@ for k = ID_time_idxs
     V = build_data_mat_ltv(U, y_matrix, q, nu, nz, k, no_rollouts);
     
     if k<= q
-        alpha_beta((k-1)*nz + 1: k*nz,1:(k-1)*(nu+nz)+nu) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);%moore penrose inverse.
+        alpha_beta((k-1)*nz + 1: k*nz,1:(k-1)*(nu+nz)+nu) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);%moore penros e inverse.
     else
         alpha_beta((k-1)*nz + 1: k*nz,:) = y_matrix((k - 1)*nz + 1: (k)*nz, :)*pinv(V);  
     end
@@ -90,7 +90,7 @@ fprintf('Calculated open-loop markov parameters\n\n');
 
 %% build hankel to estimate A,B,C
 
-[A_hat, B_hat, C_hat, D_hat, Trans_q] = TVERA(system, markov_open_loop, q, nu, nz, t_steps);
+[A_hat, B_hat, C_hat, D_hat] = TVERA(system, markov_open_loop, q, nu, nz, t_steps);
 
 fprintf('Calculated A, B, C \n\n');
 %% calculate open-loop markov parameters from A,B,C

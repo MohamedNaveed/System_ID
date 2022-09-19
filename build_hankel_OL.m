@@ -5,9 +5,11 @@ function [H] = build_hankel_OL(markov_open_loop,q,k, n_cols, nz, nu)
 
 H = zeros(q*nz, n_cols*nu); %hankel
 
+%{
 if (k-n_cols < 0)
     disp('request invalid');
 end
+%}
 
 for i = 0:q %rows of hankel
     

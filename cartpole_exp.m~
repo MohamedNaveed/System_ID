@@ -1,63 +1,19 @@
-% System ID main. 
-clc;clear;
+clc; clear;
 
-% get system 
-system = 'oscillator'
+load('cartpole_data_x0=0.mat');
 
-if strcmp(system,'oscillator')
-    sysd = oscillator(0);
-end
-rng(0);
-n = size(sysd.A,1); % order of the system
-nu = size(sysd.B,2); % number of control inputs
-nz = size(sysd.C,1); % number of outputs
+nu = Model.nu; % number of control inputs
+nz = Task.nm; % number of outputs
 
-x0 = zeros(n,1);
-%x0 = ones(n,1);
+q = 2; % steps to loop back
 
-t_steps = 100;
+t_steps = size(delta_u,1); % horizon
 
-no_rollouts = 50; 
+no_rollouts = size(delta_u,2); 
 
-U = zeros(nu*t_steps,no_rollouts);
-y_matrix = zeros(nz*t_steps, no_rollouts);
+U = flipud(delta_u);
+y_matrix = flipud(delta_z);
 
-ADD_PROC_NOISE = false;
-ADD_MEAS_NOISE = false;
-
-for i=1:no_rollouts
-    
-    u_vec = normrnd(0, 20, nu, t_steps); %perturbation
-    %u_vec = zeros(nu, t_steps); u_vec(:,1) = ones(nu,1); x0 = zeros(n,1); %impulse
-    
-    if strcmp(system,'oscillator')
-        [x, y] = generate_response_oscillator(x0, u_vec, n, nz, sysd.Ts);%output
-    end
-    
-    U(:,i) = reshape(u_vec,nu*t_steps,1); 
-    y_matrix(:,i) = reshape(y, nz*t_steps,1); 
-
-end
-fprintf('Response calculated for %i rollouts and %i time steps\n\n', no_rollouts, t_steps);
-%% plot response
-%{
-figure;
-plot(1:t_steps, y, 'Linewidth',2);
-xlabel('time steps');
-ylabel('output');
-%}
-%% Choose q value.
-
-q = 3; % number of markov parameters to estimate
-
-
-%% true open loop markov parameters
-
-num_mp = t_steps; % number of markov parameters
-
-Y_true = calculate_true_markov_parameters_ltv(system,num_mp, t_steps);
-
-fprintf('Calculated true markov parameters for %i steps\n\n', num_mp);
 %% build data (V) matrix and calculate the ARMA parameters
 
 alpha_beta = zeros(nz*t_steps, q*(nz + nu) +  nu);
@@ -81,12 +37,11 @@ end
 fprintf('Estimated ARMA parameters\n\n');
 
 %% Find open loop markov parameters
-
+num_mp = t_steps;
 markov_open_loop = calculate_open_loop_markov_para_ltv(nu, nz,...
                              num_mp, alpha_beta, ID_time_idxs, t_steps, q);
 
 fprintf('Calculated open-loop markov parameters\n\n');
-
 
 %% build hankel to estimate A,B,C
 
