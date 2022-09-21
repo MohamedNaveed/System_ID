@@ -32,7 +32,7 @@ if strcmp(system,'oscillator')
 
 elseif strcmp(system, 'cartpole')
    
-    load('data/cartpole_data_free_response.mat');
+    load('data/cartpole_data_free_response_sept21.mat');
     n = Model.nsys; %states in the system
     U = flipud(delta_u);
     
@@ -43,7 +43,7 @@ elseif strcmp(system, 'cartpole')
 
 end
 
-%calculate A,B,C
+%calculate A,B,C, G
 for k= 0:q
     
     

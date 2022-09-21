@@ -1,4 +1,4 @@
-% System ID main. 
+% System ID main. LTI case
 clc;clear;
 
 % get system 

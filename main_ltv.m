@@ -15,7 +15,7 @@ nz = size(sysd.C,1); % number of outputs
 x0 = zeros(n,1);
 %x0 = ones(n,1);
 
-t_steps = 100;
+t_steps = 30;
 
 no_rollouts = 50; 
 
@@ -48,7 +48,7 @@ ylabel('output');
 %}
 %% Choose q value.
 
-q = 3; % number of markov parameters to estimate
+q = 4; % number of markov parameters to estimate
 
 
 %% true open loop markov parameters
@@ -58,6 +58,7 @@ num_mp = t_steps; % number of markov parameters
 Y_true = calculate_true_markov_parameters_ltv(system,num_mp, t_steps);
 
 fprintf('Calculated true markov parameters for %i steps\n\n', num_mp);
+
 %% build data (V) matrix and calculate the ARMA parameters
 
 alpha_beta = zeros(nz*t_steps, q*(nz + nu) +  nu);
@@ -90,9 +91,10 @@ fprintf('Calculated open-loop markov parameters\n\n');
 %% calculate observer gain matrix
 
 h_o = calculate_observer_gain_markov(nu, nz, num_mp, alpha_beta,...
-        ID_time_idxs, t_steps, q);
+        t_steps, q);
 
 fprintf('Calculated observer markov parameters \n\n');
+
 %% build hankel to estimate A,B,C
 
 [A_hat, B_hat, C_hat, D_hat, G_hat] = TVERA(system, markov_open_loop, q, nu, nz, t_steps, h_o);
@@ -108,10 +110,32 @@ fprintf('Calculated open-loop markov parameters from A, B, C\n\n');
 
 %% calculate observer in the loop markov parameters
 
-closed_loop_markov_parameters = calculate_markov_from_ABCG(A_hat, B_hat, C_hat, D_hat, G_hat, q,t_steps,num_mp);
+closed_loop_markov_parameters = calculate_markov_from_ABCG(A_hat, B_hat,...
+    C_hat, D_hat, G_hat, q,t_steps,nz,nu, alpha_beta);
 
+fprintf('Calculated closed-loop markov parameters from A, B, C, G\n\n');
 %% checking response for ARMA model
-
-check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC,...
+ZERO_INIT = false;
+[err_y_arma, err_y_OKID] = check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC,...
             t_steps, q, nu, nz, n, sysd.Ts, num_mp, U, y_matrix,...
-            A_hat, B_hat, C_hat, D_hat, G_hat);
+            A_hat, B_hat, C_hat, D_hat, G_hat, ZERO_INIT);
+        
+%% error analysis
+
+%remove outliers
+err_y_arma = rmoutliers(err_y_arma,3);
+err_y_OKID = rmoutliers(err_y_OKID,3);
+
+mean_err_y_arma = mean(err_y_arma,3,'omitnan');
+mean_err_y_OKID = mean(err_y_OKID,3,'omitnan');
+
+std_err_y_arma = std(err_y_arma,0,3,'omitnan');
+std_err_y_OKID = std(err_y_OKID,0,3,'omitnan');
+
+%% plot
+sample_id = 1;
+%plot_response(err_y_arma(:,:,1), err_y_OKID(:,:,1), t_steps, q);
+
+%%
+SAVE_PLOT = false;
+plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID, std_err_y_OKID,q, SAVE_PLOT);
