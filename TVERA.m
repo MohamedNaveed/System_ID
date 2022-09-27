@@ -14,7 +14,7 @@ for k = q:t_steps-q-1
     Hankel = build_hankel_OL(markov_open_loop,q,k,n_cols, nz, nu);
     
     if k == q
-        order = rank(Hankel);
+        order = 4;%rank(Hankel);
     end
     
     

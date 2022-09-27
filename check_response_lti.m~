@@ -1,0 +1,56 @@
+function [err_arma,err_okid,err_ABC] = check_response_lti(sysd, q, Y_bar, A_est, B_est, C_est, D_est, M)
+
+N_mc = 100;
+
+n = size(sysd.A,1); % order of the system
+nu = size(sysd.B,2); % number of control inputs
+nz = size(sysd.C,1); % number of outputs
+t_steps = 20;
+
+for n_mc = 1:N_mc
+    
+    x0 = rand(n,1);
+
+    
+    u_vec = normrnd(0, 20, 1, t_steps); %perturbation
+
+    ADD_PROC_NOISE = false;
+    ADD_MEAS_NOISE = false;
+
+    [x, y_true] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);
+
+    y_predicted_arma = zeros(nz, t_steps);
+    y_predicted_ABC  = zeros(nz, t_steps);
+    y_predicted_OKID = zeros(nz, t_steps);
+    
+    % ARMA
+    for k =1:t_steps
+        
+        
+        if k>q
+            info_state = zeros((nz + nu)*q + nu, 1);
+            info_state(1:nu,:) = u_vec(:,k);
+            
+            for i = 1:q
+                info_state(nu + (i-1)*(nu + nz) + 1: nu + i*(nu + nz)) = [u_vec(:,k-i);y_true(:,k-i)];
+            end
+            
+            y_predicted_arma(:,k) = Y_bar(1:nu+q(nu+nz))*info_state;
+        else
+            y_predicted_arma(:,k) = y_true(:,k);
+        end
+        
+    end
+    
+    % ABC, ABCMD
+     =y_stack = zeros(q*nz,1);
+    Gq_matrix = zeros(q*nz,q*nu);
+    u_stack = zeros(q*nu,1);
+    Oq = zeros(q*nz,n);
+    
+    for k =1:q
+        y_stack((q-k)*nz + 1:(q-k + 1)*nz,:) = y_true(:,k);
+    end
+    
+end
+

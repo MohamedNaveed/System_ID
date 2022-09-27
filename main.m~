@@ -21,7 +21,7 @@ ADD_MEAS_NOISE = false;
 
 [x, y] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
 
-q = 4; % number of markov parameters to estimate
+q = 3; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
@@ -116,57 +116,35 @@ plot(1:t_steps, y, 'Linewidth',2);
 xlabel('time steps');
 ylabel('output');
 %}
-SAVE_PLOT = true;
-fig = figure(1);
-subplot(2,1,1);
+
+figure(1);
+subplot(3,1,1);
 hold on;
 for j=1:size(err_Y,1)
     plot(1:length(err_Y),err_Y(j,:),'Linewidth',2); 
 end
 ylabel('error $Y$','Interpreter','latex','fontsize',16);
 
-%{
 subplot(3,1,2);
 hold on;
 for j=1:size(err_Y_est,1)
     plot(1:length(err_Y_est),err_Y_est(j,:),'Linewidth',2);
 end
 ylabel('error $Y_{est}$','Interpreter','latex','fontsize',16);
-%}
 
-subplot(2,1,2);
+subplot(3,1,3);
 hold on;
 for j=1:size(err_Y_bar_est,1)
-    plot(1:length(err_Y_bar_est(:,1:nu+q*(nu+nz))),err_Y_bar_est(j,1:nu+q*(nu+nz)),'Linewidth',2);
-end
-xlabel('Index');
-ylabel('error $\bar{Y}$','Interpreter','latex','fontsize',16);
-hold off;
-if SAVE_PLOT
-    set(fig,'Units','inches');
-    screenposition = get(fig,'Position');
-    set(fig,...
-        'PaperPosition',[0 0 screenposition(3:4)],...
-        'PaperSize',[screenposition(3:4)]);
-    print -dpdf -painters '/home/naveed/Dropbox/Research/Manuscripts/ACC23/plots/okid_sys_markov_error.pdf'
-end
-%% 
-
-figure;
-for j=1:size(err_Y_bar_est,1)
-    plot(1:length(err_Y_bar_est(:,1:nu+q*(nu+nz))),err_Y_bar_est(j,1:nu+q*(nu+nz)),'Linewidth',2);
+    plot(1:length(err_Y_bar_est),err_Y_bar_est(j,:),'Linewidth',2);
 end
 xlabel('Markov parameters');
 ylabel('error $\bar{Y}_{est}$','Interpreter','latex','fontsize',16);
-
+hold off;
 
 %% check response
 
 [err_y_arma,err_y_OKID,err_y_ABC] = check_response_lti(sysd, q, Y_bar, Y,...
                     A_est, B_est, C_est, D_est, M);
-
-%% observer canonical form
-[err_y_occ, err_y_arma] = response_observer_form(sysd, q, Y_bar);
 
 %% error analysis
 
@@ -186,7 +164,6 @@ std_err_y_ABC = std(err_y_ABC,0,3,'omitnan');
 SAVE_PLOT = false;
 plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID, std_err_y_OKID,...
     mean_err_y_ABC, std_err_y_ABC, q, SAVE_PLOT);
-
 %% reconstruct initial condition experiment
 
 Y_bar_from_xtq = reconstruct_initial_condition_exp(sysd, q, x, y, u_vec, Y_bar);

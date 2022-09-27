@@ -63,7 +63,7 @@ for n_mc = 1:N_mc
             end
 
             y_predicted_open_loop(:,k) = markov_open_loop((k-1)*nz + 1: (k)*nz, :)*control_state;
-            y_predicted_ABC(:,k) = markov_parameters_ABC((k-1)*nz + 1: (k)*nz, :)*control_state;
+            %y_predicted_ABC(:,k) = markov_parameters_ABC((k-1)*nz + 1: (k)*nz, :)*control_state;
 
         else
 
@@ -88,7 +88,7 @@ for n_mc = 1:N_mc
             %y_predicted_arma(:,k) = alpha_beta((k-1)*nz + 1: k*nz,1:(k-1)*(nu+nz)+nu)*info_state;
 
             y_predicted_open_loop(:,k) = markov_open_loop((k-1)*nz + 1: (k)*nz, :)*control_state;
-            y_predicted_ABC(:,k) = markov_parameters_ABC((k-1)*nz + 1: (k)*nz, :)*control_state;
+            %y_predicted_ABC(:,k) = markov_parameters_ABC((k-1)*nz + 1: (k)*nz, :)*control_state;
             
             y_predicted_arma(:,k) = y_true(:,k);
             
@@ -123,8 +123,9 @@ for n_mc = 1:N_mc
         end
         Oq((q-k)*nz + 1:(q-k+1)*nz,:) = C_hat(:,:,k)*Phi;
     end
+    x0_hat = pinv(Oq)*(y_stack - Gq_matrix*u_stack);%reconstructing initial condition
     
-    x_hat = pinv(Oq)*(y_stack - Gq_matrix*u_stack); %reconstructing initial condition
+    x_hat = x0_hat; 
     
     for k = 1:t_steps
 
@@ -133,6 +134,15 @@ for n_mc = 1:N_mc
         x_hat = (A_hat(:,:,k) + G_hat(:,:,k)*C_hat(:,:,k))*x_hat + ...
             (B_hat(:,:,k) + G_hat(:,:,k)*D_hat)*u_vec(:,k) - ...
             G_hat(:,:,k)*y_true(:,k);
+    end
+    
+    x_hat = x0_hat;
+    for k = 1:t_steps
+
+        y_predicted_ABC(:,k) = C_hat(:,:,k)*x_hat + D_hat*u_vec(:,k);
+
+        x_hat = A_hat(:,:,k)*x_hat + B_hat(:,:,k)*u_vec(:,k);
+
     end
     err_y_arma(:,:,n_mc) = (y_true - y_predicted_arma)./abs(y_true);
     err_y_open_loop(:,:,n_mc) = (y_true - y_predicted_open_loop)./abs(y_true);

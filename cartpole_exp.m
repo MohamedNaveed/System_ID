@@ -94,6 +94,6 @@ sample_id = 1;
 plot_response(err_y_arma(:,:,1), err_y_OKID(:,:,1), t_steps, q);
 
 %%
-SAVE_PLOT = true;
+SAVE_PLOT = false;
 plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID, std_err_y_OKID,q, SAVE_PLOT);
             

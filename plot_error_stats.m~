@@ -36,7 +36,7 @@ plot(plot_idx_okid, mean_err_y_ABC(1,plot_idx_okid),'o','MarkerSize',10,'Color',
                     'DisplayName', 'A,B,C,D');
 hold on;
 ylabel('Error in output-1','FontSize',font_size);
-xlim([q,t_steps])
+xlim([0,t_steps])
 %ylim([-1e-3,4e-3]);
 %h = legend('Location', 'SouthWest');
 %h =legend();
@@ -65,9 +65,10 @@ x2 = [x, fliplr(x)];
 %fill(x2,inbetween,[0.4660 0.6740 0.1880],'FaceAlpha',0.3,'HandleVisibility','off');
 %ylim([-5e-12, 5e-12]);
 
-plot(plot_idx_okid, mean_err_y_ABC(2,plot_idx_okid),'o','MarkerSize',10,'Color','r', 'Linewidth',2);
+plot(plot_idx_okid, mean_err_y_ABC(1,plot_idx_okid),'o','MarkerSize',10,'Color','r', 'Linewidth',2,...
+                    );
                 
-xlim([q,t_steps])
+xlim([0,t_steps])
 xlabel('time steps','FontSize',font_size);
 ylabel('Error in output-2','FontSize',font_size);
 
