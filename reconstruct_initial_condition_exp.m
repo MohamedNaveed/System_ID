@@ -12,7 +12,7 @@ end
 
 Oq_dagger = inv(Oq'*Oq)*Oq';
 
-t = 100; %time instant
+t = 40; %time instant
 
 samples_taken = t-1:-1:t-q;
 

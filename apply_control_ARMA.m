@@ -1,4 +1,4 @@
-function [Z, UU, K] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec)
+function [Z, UU, K, z] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec)
 
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
@@ -24,45 +24,51 @@ BB(1:nz,:) = beta(:,1:nu);
 
 BB(q*nz + 1:q*nz + nu) = eye(nu);
 
-CC = eye(q*nz + (q-1)*nu);
+CC = [eye(nz), zeros(nz,(q-1)*nz + (q-1)*nu)];
 DD = zeros(q*nz + (q-1)*nu , nu);
 
 % design lqr
-Q = 10*eye(q*nz + (q-1)*nu);
+Q = 10*eye(nz);
+Q_N = 10*eye(nz); %terminal cost.
 R = eye(nu);
 
-[K, S, e] = dlqr(AA, BB, Q, R);
+Q_Z = CC'*Q*CC;
+Q_Z_N = CC'*Q_N*CC;
 
+control_t_steps = 50;
+
+K = finite_horizon_lqr(AA,BB,Q_Z, R,Q_Z_N,control_t_steps); 
 
 
 % choose initial condition
-t = 100;
+t = q;
 Z0 = zeros(q*nz + (q-1)*nu,1);
 
 for i=1:q
     
-    Z0((i-1)*nz + 1: i*nz) = y(:,t-i);
+    Z0((i-1)*nz + 1: i*nz) = y(:,t-i+1);
 end
 
 for i=1:q-1
     
-    Z0(q*nz + (i-1)*nu + 1:q*nz + i*nu) = u_vec(:,t-i-1);
+    Z0(q*nz + (i-1)*nu + 1:q*nz + i*nu) = u_vec(:,t-i);
 end
 
 % apply control
 
-control_t_steps = 500;
-
 Z = zeros(q*nz + (q-1)*nu, control_t_steps+1);
+z = zeros(nz, control_t_steps+1); 
+
 Z(:,1) = Z0;
+z(:,1) = CC*Z0;
 
 UU = zeros(nu, control_t_steps);
 
 for i = 1:control_t_steps
     
-    UU(:,i) = -K*Z(:,i);
+    UU(:,i) = -K(:,:,i)*Z(:,i);
     Z(:,i+1) = AA*Z(:,i) + BB*UU(:,i); 
-    
+    z(:,i+1) = CC*Z(:,i+1);
 end
 
 end

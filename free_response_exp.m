@@ -40,6 +40,17 @@ elseif strcmp(system, 'cartpole')
     t_steps = Task.horizon+1;
  
     y_matrix = flipud(delta_y(1:nz*t_steps,:));
+    
+elseif strcmp(system, 'fish')
+   
+    load('data/fish_free_response_output11.mat');
+    n = Model.nsys; %states in the system
+    U = flipud(delta_u);
+    
+    n_cols = 1; %number of time steps in Hankel columns
+    t_steps = Task.horizon+1;
+ 
+    y_matrix = flipud(delta_y(1:nz*t_steps,:));
 
 end
 
@@ -49,7 +60,7 @@ for k= 0:q
     
     [U,Sig,V] = svd(y_matrix((k)*nz + 1: (k+q)*nz,:));
 
-    rank_Sig = rank(Sig,1e-5);
+    rank_Sig = 4;%rank(Sig,1e-6);
 
     root_Sig = Sig(1:rank_Sig,1:rank_Sig)^(1/2);
 

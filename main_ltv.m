@@ -12,8 +12,6 @@ n = size(sysd.A,1); % order of the system
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
 
-
-
 t_steps = 30;
 
 no_rollouts = 50; 
@@ -25,9 +23,9 @@ ADD_PROC_NOISE = false;
 ADD_MEAS_NOISE = false;
 
 for i=1:no_rollouts
-    x0 = randn(n,1);
+    %x0 = randn(n,1);
     
-    %x0 = zeros(n,1);
+    x0 = zeros(n,1);
     
     %x0 = ones(n,1);
     
@@ -120,8 +118,8 @@ closed_loop_markov_parameters = calculate_markov_from_ABCG(A_hat, B_hat,...
 fprintf('Calculated closed-loop markov parameters from A, B, C, G\n\n');
 
 %% checking response for ARMA model
-ZERO_INIT = false;
-[err_y_arma, err_y_OKID] = check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC,...
+ZERO_INIT = true;
+[err_y_arma, err_y_OKID, err_y_ABC] = check_response(system, alpha_beta, markov_open_loop,markov_parameters_ABC,...
             t_steps, q, nu, nz, n, sysd.Ts, num_mp, U, y_matrix,...
             A_hat, B_hat, C_hat, D_hat, G_hat, ZERO_INIT);
         
@@ -130,17 +128,27 @@ ZERO_INIT = false;
 %remove outliers
 err_y_arma = rmoutliers(err_y_arma,3);
 err_y_OKID = rmoutliers(err_y_OKID,3);
+err_y_ABC = rmoutliers(err_y_ABC,3);
 
 mean_err_y_arma = mean(err_y_arma,3,'omitnan');
 mean_err_y_OKID = mean(err_y_OKID,3,'omitnan');
+mean_err_y_ABC = mean(err_y_ABC,3,'omitnan');
 
 std_err_y_arma = std(err_y_arma,0,3,'omitnan');
 std_err_y_OKID = std(err_y_OKID,0,3,'omitnan');
+std_err_y_ABC = std(err_y_ABC,0,3,'omitnan');
+
+norm_err_arma = vecnorm(mean_err_y_arma,1);
+norm_err_OKID = vecnorm(mean_err_y_OKID,1);
+norm_err_ABC = vecnorm(mean_err_y_ABC,1);
 
 %% plot
 sample_id = 1;
 %plot_response(err_y_arma(:,:,1), err_y_OKID(:,:,1), t_steps, q);
 
 %%
-SAVE_PLOT = false;
-plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID, std_err_y_OKID,q, SAVE_PLOT);
+SAVE_PLOT = true;
+%plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID,...
+%    std_err_y_OKID, mean_err_y_ABC, std_err_y_ABC,q, SAVE_PLOT);
+
+plot_error_norm(norm_err_arma, norm_err_OKID, norm_err_ABC,q, SAVE_PLOT);

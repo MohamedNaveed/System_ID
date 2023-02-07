@@ -1,6 +1,6 @@
 function [A_hat, B_hat, C_hat, D_hat, G_hat] = TVERA(system, markov_open_loop, q, nu, nz, t_steps, h_o)
 
-n_cols = q*nz;
+n_cols = q+1;
 
 D_hat = markov_open_loop(1:nz,1:nu);
 

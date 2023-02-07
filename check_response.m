@@ -1,4 +1,4 @@
-function [err_y_arma, err_y_OKID] = check_response(system, alpha_beta, markov_open_loop,...
+function [err_y_arma, err_y_OKID, err_y_open_loop] = check_response(system, alpha_beta, markov_open_loop,...
     markov_parameters_ABC, t_steps, q, nu, nz, n, Ts, num_mp, U, y_matrix,...
     A_hat, B_hat, C_hat, D_hat, G_hat, ZERO_INIT)
 
@@ -27,7 +27,13 @@ for n_mc = 1:N_mc
         
         y_true = reshape(y_matrix(:,n_mc),[nz,t_steps]);
         u_vec = reshape(U(:,n_mc),[nu,t_steps]);
+    
+    elseif strcmp(system,'fish')
+        
+        y_true = reshape(y_matrix(:,n_mc),[nz,t_steps]);
+        u_vec = reshape(U(:,n_mc),[nu,t_steps]);
     end
+    
 
     %prediction using markov.
     for k = 1:t_steps 

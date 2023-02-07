@@ -23,5 +23,44 @@ for k = 1:num_mp-1
     Y(:,nu + (k-1)*nu + 1:nu + k*nu) = temp;
     
 end
+
+%{ 
+%batch implementation of the previous loop. Exactly the same answer.
+P_mat = zeros((num_mp-1)*nz, (num_mp-1)*nu);
+Q_mat = zeros((num_mp-1)*nz, nu);
+
+for k = 1:num_mp -1
+   
+    P_mat((k-1)*nz + 1: k*nz,(k-1)*nz + 1: k*nz) = eye(nz,nz);
+    
+    if k >1
+        for j = 1:k-1
+
+            P_mat((k-1)*nz + 1: k*nz,(j-1)*nz + 1:j*nz) = -Y_bar(:, nu + (k-j-1)*(nu + nz)+ nu + 1:...
+                       nu + (k-j)*(nu + nz));
+        end
+    end
+    
+    Q_mat((k-1)*nz + 1: k*nz,:) = Y_bar(:, nu + 1 + (k - 1)*(nu + nz):nu + (k - 1)*(nu + nz) + nu) + ...
+            Y_bar(:, nu + (k - 1)*(nu + nz)+ nu + 1:nu + (k)*(nu + nz))*D_est;
 end
+
+temp = P_mat\Q_mat;
+
+Y_hat = [D_est, reshape(temp,[nz,num_mp-1])];
+    
+%}
+end
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -21,13 +21,14 @@ ADD_MEAS_NOISE = false;
 
 [x, y] = generate_response(x0, u_vec, sysd, ADD_PROC_NOISE, ADD_MEAS_NOISE);%output
 
-q = 4; % number of markov parameters to estimate
+q = 3; % number of markov parameters to estimate
 
 %% true open loop markov parameters
 
 num_mp = t_steps; % number of markov parameters
 
 Y_true = calculate_true_markov_parameters(sysd,num_mp);
+
 
 %% build data (V) matrix
 
@@ -63,9 +64,6 @@ Y_bar = [Y_bar zeros(nz, (nu+nz)*(num_mp - q))]; %appending 0's to find the othe
 
 Y = calculate_open_loop_markov_para(sysd,num_mp, Y_bar);
 
-%% error in markov parameters
-
-err_Y = (Y_true - Y);
 
 %% Eigen realization algorithm ERA
 
@@ -82,7 +80,6 @@ for i=1:num_mp-1
 end
 Y_est = [D_est Y_est];
 
-err_Y_est = (Y_true - Y_est);
 
 %% estimation of observer gain M
 
@@ -95,20 +92,21 @@ B_bar = [B_est + M*D_est, -M];
 
 disp('Eigenvalues of A_bar = ');
 eig(A_bar)
-disp('A_bar^q =');
-A_bar^q
+disp('C_est A_bar^q B_bar =');
+C_est*(A_bar^q)*B_bar
+
 
 
 %% Y_bar_est
 
 Y_bar_est = D_est;
 
-for i = 1:num_mp
+for i = 1:q
     
     Y_bar_est = [Y_bar_est, C_est*(A_bar)^(i-1)*B_bar];
 end
 
-err_Y_bar_est = (Y_bar_est - Y_bar);
+
 %%
 %{
 figure;
@@ -116,14 +114,41 @@ plot(1:t_steps, y, 'Linewidth',2);
 xlabel('time steps');
 ylabel('output');
 %}
+
+%%data refining
+thres = 1e-12;
+Y_true(abs(Y_true) < thres) = 0;
+Y_bar(abs(Y_bar) < thres ) = 0;
+Y_bar_est(abs(Y_bar_est) < thres) = 0;
+Y_est(abs(Y_est) < thres) = 0;
+Y(abs(Y) < thres) = 0;
+
+err_Y = (Y_true - Y)./abs(Y_true);%% error in markov parameters
+err_Y(isnan(err_Y)) = 0;
+
+err_Y_bar_est = (Y_bar_est - Y_bar(:,1:nu+q*(nu+nz)))./abs(Y_bar(:,1:nu+q*(nu+nz)));
+err_Y_bar_est(isnan(err_Y_bar_est)) = 0;
+
+err_Y_est = (Y_true - Y_est)./abs(Y_true);
+
+norm_err_Y = vecnorm(err_Y,1);
+norm_err_Y_bar = vecnorm(err_Y_bar_est,1);
+%%plotting
+
 SAVE_PLOT = true;
-fig = figure(1);
+
+
+fig = figure;
 subplot(2,1,1);
 hold on;
-for j=1:size(err_Y,1)
-    plot(1:length(err_Y),err_Y(j,:),'Linewidth',2); 
-end
-ylabel('error $Y$','Interpreter','latex','fontsize',16);
+plot(1:length(norm_err_Y_bar),norm_err_Y_bar,'Linewidth',2);
+ylabel('$||error\ \bar{Y}||_1$','Interpreter','latex','fontsize',16);
+ylim([-0.5,3])
+subplot(2,1,2);
+plot(1:length(norm_err_Y),norm_err_Y,'Linewidth',2); 
+ylim([-1e-11,4e-11])
+xlabel('Index');
+ylabel('$||error\ Y||_1$','Interpreter','latex','fontsize',16);
 
 %{
 subplot(3,1,2);
@@ -134,21 +159,15 @@ end
 ylabel('error $Y_{est}$','Interpreter','latex','fontsize',16);
 %}
 
-subplot(2,1,2);
-hold on;
-for j=1:size(err_Y_bar_est,1)
-    plot(1:length(err_Y_bar_est(:,1:nu+q*(nu+nz))),err_Y_bar_est(j,1:nu+q*(nu+nz)),'Linewidth',2);
-end
-xlabel('Index');
-ylabel('error $\bar{Y}$','Interpreter','latex','fontsize',16);
 hold off;
 if SAVE_PLOT
     set(fig,'Units','inches');
+    fig.Position = [100,100,4.5,3.5];
     screenposition = get(fig,'Position');
     set(fig,...
         'PaperPosition',[0 0 screenposition(3:4)],...
         'PaperSize',[screenposition(3:4)]);
-    print -dpdf -painters '/home/naveed/Dropbox/Research/Manuscripts/ACC23/plots/okid_sys_markov_error.pdf'
+    print -dpdf -painters '/home/naveed/Dropbox/Research/Manuscripts/ACC23/plots/okid_sys_markov_error_q=4.pdf'
 end
 %% 
 

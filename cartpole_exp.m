@@ -1,5 +1,6 @@
 clc; clear;
 
+%load('data/fish_outputs11.mat');
 load('data/cartpole_data_sept21.mat');
 Model.name
 nu = Model.nu; % number of control inputs
@@ -7,12 +8,12 @@ nz = Task.nm; % number of outputs
 n = Model.nsys; %states in the system
 q = 4; % steps to loop back
 
-t_steps = size(delta_u,1); % horizon
+t_steps = Task.horizon+1; % horizon
 
-no_rollouts = size(delta_u,2); 
+no_rollouts = 300; 
 
-U = flipud(delta_u);
-y_matrix = flipud(delta_z(1:nz*t_steps,:));
+U = flipud(delta_u(:,1:no_rollouts));
+y_matrix = flipud(delta_z(1:nz*t_steps,1:no_rollouts));
 
 %% build data (V) matrix and calculate the ARMA parameters
 
@@ -72,8 +73,12 @@ fprintf('Calculated closed-loop markov parameters from A, B, C, G\n\n');
 %% checking response for ARMA model
 sysd.Ts = 0.1; %dummy
 ZERO_INIT = 0;
-[err_y_arma, err_y_OKID] = check_response(Model.name, alpha_beta, markov_open_loop,markov_parameters_ABC,...
-                t_steps, q, nu, nz, n, sysd.Ts, num_mp, U, y_matrix, ...
+n = size(A_hat,1);
+y_matrix_test = flipud(delta_z(1:nz*t_steps,1+no_rollouts:end));
+U_test = flipud(delta_u(:,1+no_rollouts:end));
+
+[err_y_arma, err_y_OKID, err_y_ABC] = check_response(Model.name, alpha_beta, markov_open_loop,markov_parameters_ABC,...
+                t_steps, q, nu, nz, n, sysd.Ts, num_mp, U_test, y_matrix_test, ...
                 A_hat, B_hat, C_hat, D_hat, G_hat, ZERO_INIT);
 
 fprintf(' Experiment done \n\n');
@@ -82,18 +87,30 @@ fprintf(' Experiment done \n\n');
 %remove outliers
 err_y_arma = rmoutliers(err_y_arma,3);
 err_y_OKID = rmoutliers(err_y_OKID,3);
+err_y_ABC = rmoutliers(err_y_ABC,3);
 
 mean_err_y_arma = mean(err_y_arma,3,'omitnan');
 mean_err_y_OKID = mean(err_y_OKID,3,'omitnan');
+mean_err_y_ABC = mean(err_y_ABC,3,'omitnan');
 
 std_err_y_arma = std(err_y_arma,0,3,'omitnan');
 std_err_y_OKID = std(err_y_OKID,0,3,'omitnan');
+std_err_y_ABC = std(err_y_ABC,0,3,'omitnan');
+
+norm_err_arma = vecnorm(mean_err_y_arma,1);
+norm_err_OKID = vecnorm(mean_err_y_OKID,1);
+norm_err_ABC = vecnorm(mean_err_y_ABC,1);
 
 %% plot
 sample_id = 1;
 plot_response(err_y_arma(:,:,1), err_y_OKID(:,:,1), t_steps, q);
 
 %%
-SAVE_PLOT = false;
-plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID, std_err_y_OKID,q, SAVE_PLOT);
+SAVE_PLOT = true;
+
+plot_error_norm(norm_err_arma, norm_err_OKID, norm_err_ABC,q, SAVE_PLOT);
+
+%%
+%plot_error_stats(mean_err_y_arma, std_err_y_arma, mean_err_y_OKID,...
+%    std_err_y_OKID, mean_err_y_ABC, std_err_y_ABC,q, SAVE_PLOT);
             
