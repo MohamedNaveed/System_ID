@@ -1,4 +1,5 @@
-function [Y_bar_from_xtq] = reconstruct_initial_condition_exp(sysd, q, x, y, u_vec, Y_bar)
+function [X, UU, K, z] = apply_control_true_sys(sysd, q, x, y, u_vec)
+% lqr control on the true system 
 
 n = size(sysd.A,1); % order of the system
 nu = size(sysd.B,2); % number of control inputs
@@ -11,6 +12,7 @@ for i=1:q
 end
 
 Oq_dagger = inv(Oq'*Oq)*Oq';
+
 
 t = q+1; %time instant
 
@@ -44,23 +46,46 @@ estimated_init_cond = Oq_dagger*(Zq - Gq*Uq)
 disp('true initial condition')
 x(:,t-q)
 
-Y_true = calculate_true_markov_parameters(sysd,q + 1); %true markov parameters (+1 to account for D)
+%propagate initial condition till q
+X = estimated_init_cond;
 
-alpha_bar = sysd.C*(sysd.A^q)*Oq_dagger;
-beta_bar = Y_true(:,nu + 1:nu + q*nu) - alpha_bar*Gq;
-
-Y_bar_from_xtq = zeros(nz,nu + q*(nu+nz));
-Y_bar_from_xtq(:,1:nu) = sysd.D;
-
-for i=1:q
-    Y_bar_from_xtq(:,nu + (i-1)*(nu+nz) + 1: nu + i*(nu+nz)) = ...
-        [beta_bar(:,(i-1)*(nu) + 1: (i)*(nu)),alpha_bar(:,(i-1)*nz + 1: i*nz)];
-    
+for i = 1:q-1
+    X = sysd.A*X + sysd.B*u_vec(:,i);
 end
 
-figure(3);
-plot(1:length(Y_bar_from_xtq),Y_bar(:,1:nu + q*(nu+nz)) - Y_bar_from_xtq,'Linewidth',2);
-ylabel('error in $Y_{bar}$','Interpreter','latex','fontsize',16);
+X_q = X; % initial condition for optimal control problem from q
 
+% design lqr
+Q = 10*eye(nz);
+Q_N = 10*eye(nz); %terminal cost.
+R = eye(nu);
+
+Q_X = sysd.C'*Q*sysd.C;
+Q_X_N = sysd.C'*Q_N*sysd.C;
+
+control_t_steps = 50;
+
+K = finite_horizon_lqr(sysd.A, sysd.B, Q_X, R, Q_X_N, control_t_steps); 
+
+%applying control
+
+X = zeros(n, control_t_steps+1);
+X(:,1) = X_q;
+
+z = zeros(nz,control_t_steps+1);
+z(:,1) = sysd.C*X_q;
+
+UU = zeros(nu, control_t_steps);
+cost = 0;
+
+for i = 1:control_t_steps
+    
+    UU(:,i) = -K(:,:,i)*X(:,i);
+    cost = cost + 0.5*(
+    
+    X(:,i+1) = sysd.A*X(:,i) + sysd.B*UU(:,i); 
+    z(:,i+1) = sysd.C*X(:,i+1);
+end
+disp('Done');
 end
 

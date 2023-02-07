@@ -1,4 +1,4 @@
-function [Z, UU, K, z] = apply_control_ARMA(Y_bar, sysd, q, y, u_vec)
+function [Z, UU, K, z, cost] = apply_control_ARMA(Y_bar, sysd, q, q_bar, y, u_vec, control_t_steps)
 
 nu = size(sysd.B,2); % number of control inputs
 nz = size(sysd.C,1); % number of outputs
@@ -35,9 +35,7 @@ R = eye(nu);
 Q_Z = CC'*Q*CC;
 Q_Z_N = CC'*Q_N*CC;
 
-control_t_steps = 50;
-
-K = finite_horizon_lqr(AA,BB,Q_Z, R,Q_Z_N,control_t_steps); 
+K = finite_horizon_lqr(AA,BB,Q_Z, R,Q_Z_N,control_t_steps-(q-q_bar)); 
 
 
 % choose initial condition
@@ -56,20 +54,39 @@ end
 
 % apply control
 
-Z = zeros(q*nz + (q-1)*nu, control_t_steps+1);
-z = zeros(nz, control_t_steps+1); 
+cost = 0;
+
+if q > q_bar
+   for j= q_bar:q-1
+       
+        cost = cost + 0.5*(y(:,j)'*Q*y(:,j) + u_vec(:,j)'*R*u_vec(:,j));
+   end
+end
+
+Z = zeros(q*nz + (q-1)*nu, control_t_steps-(q-q_bar)+1);
+z = zeros(nz, control_t_steps-(q-q_bar)+1); 
 
 Z(:,1) = Z0;
 z(:,1) = CC*Z0;
 
-UU = zeros(nu, control_t_steps);
+UU = zeros(nu, control_t_steps-(q-q_bar));
 
-for i = 1:control_t_steps
-    
-    UU(:,i) = -K(:,:,i)*Z(:,i);
+
+for i = 1:control_t_steps-(q-q_bar)
+
+    UU(:,i) = K(:,:,i)*Z(:,i);
+    cost = cost + 0.5*(z(:,i)'*Q*z(:,i) + UU(:,i)'*R*UU(:,i));
+
     Z(:,i+1) = AA*Z(:,i) + BB*UU(:,i); 
     z(:,i+1) = CC*Z(:,i+1);
+  
 end
+cost = cost + 0.5*(z(:,i+1)'*Q_N*z(:,i+1));
 
+%concatenating initial controls and outputs
+
+if q > q_bar
+    UU = [u_vec(:,q_bar:q-1), UU];
+    z = [y(:,q_bar:q-1),z];
+    
 end
-
